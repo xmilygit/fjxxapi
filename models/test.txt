@@ -1,0 +1,12 @@
+AccountSchema.statics.sleep = async function (time) {
+    await sleep(time)
+}
+
+async function sleep(time) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            console.log(`休息了:${time}`)
+            resolve(`休息了:${time}`)
+        }, time);
+    })
+}
