@@ -19,6 +19,7 @@ router.post('/search', async (ctx, next) => {
     try {
         var accts = await Account.myPaging(keyword, pagesize, lastid);
         ctx.body = { "error": false, "result": accts };
+        //console.log(accts);
     } catch (err) {
         ctx.body = { 'error': true, 'message': err.message }
     }
@@ -31,6 +32,36 @@ router.post('/search', async (ctx, next) => {
     //         console.log(err)
     //     })
 
+})
+
+router.get('/admin', async (ctx, next) => {
+    ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
+    // ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
+    ctx.set('Access-Control-Allow-Credentials', true);
+    if (ctx.cookies.get('cookname'))
+        ctx.body = '已经登录的用户'
+    else
+        ctx.body = '没有登录的用户'
+})
+
+router.get('/cookies', async (ctx, next) => {
+    ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
+    // ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
+    ctx.set('Access-Control-Allow-Credentials', true);
+    console.log(ctx.querystring)
+    console.log(ctx.query)
+    if(ctx.cookies.get('cookname')){
+        ctx.body='cookies已经存在'
+        return
+    }
+    var username = ctx.query.username;
+    var password = ctx.query.password;
+    if (username == password) {
+        ctx.cookies.set('cookname', 'aaaaaaaa')
+        ctx.body = 'cookies写入完成'
+    } else {
+        ctx.body = 'cookies未写入'
+    }
 })
 
 module.exports = router
