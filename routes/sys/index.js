@@ -1,5 +1,6 @@
 const router = require('koa-router')()
 const mongoose = require('mongoose');
+const jwt=require('jsonwebtoken');
 const Account = require('../../models/Account');
 
 router.prefix('/sys')
@@ -33,11 +34,13 @@ router.post('/search', async (ctx, next) => {
     //     })
 
 })
-
-router.get('/admin', async (ctx, next) => {
-    ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
-    // ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
-    ctx.set('Access-Control-Allow-Credentials', true);
+router.use(async(ctx,next)=>{
+    console.log('拦截的访问:'+ctx.request.body.token)
+    next();
+})
+router.post('/admin', async (ctx, next) => {
+    // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
+    // ctx.set('Access-Control-Allow-Credentials', true);
     if (ctx.cookies.get('cookname'))
         ctx.body = '已经登录的用户'
     else
@@ -45,22 +48,29 @@ router.get('/admin', async (ctx, next) => {
 })
 
 router.get('/cookies', async (ctx, next) => {
-    ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
+    // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
     // ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
-    ctx.set('Access-Control-Allow-Credentials', true);
+    // ctx.set('Access-Control-Allow-Credentials', true);
     console.log(ctx.querystring)
     console.log(ctx.query)
-    if(ctx.cookies.get('cookname')){
-        ctx.body='cookies已经存在'
-        return
+    var userinfo={
+        username:"xmily",
+        admin:false
     }
+
+    // if(ctx.cookies.get('cookname')){
+    //     ctx.body='cookies已经存在'
+    //     return
+    // }
     var username = ctx.query.username;
     var password = ctx.query.password;
     if (username == password) {
-        ctx.cookies.set('cookname', 'aaaaaaaa')
-        ctx.body = 'cookies写入完成'
+        // ctx.cookies.set('cookname', 'aaaaaaaa')
+        // ctx.body = 'cookies写入完成'
+        var token=jwt.sign(userinfo,'xmilyhh');
+        ctx.body={'message':'授权完成','token':token};
     } else {
-        ctx.body = 'cookies未写入'
+        ctx.body = '授权未成功'
     }
 })
 
