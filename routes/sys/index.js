@@ -35,13 +35,26 @@ router.post('/search', async (ctx, next) => {
 
 })
 router.use(async(ctx,next)=>{
-    console.log('拦截的访问:'+ctx.request.body.token)
+    // console.log('拦截的访问:'+ctx.request.body.token)
+    var token=ctx.request.body.token;
+    if(token){
+        jwt.verify(token,'xmilyhh',function(err,decoded){
+            if(err){
+
+            }else{
+                ctx.request.decoded=decoded;
+                ///next();
+            }
+        })
+    }else{
+
+    }
     next();
 })
 router.post('/admin', async (ctx, next) => {
     // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
     // ctx.set('Access-Control-Allow-Credentials', true);
-    if (ctx.cookies.get('cookname'))
+    if (ctx.request.decoded)
         ctx.body = '已经登录的用户'
     else
         ctx.body = '没有登录的用户'
