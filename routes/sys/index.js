@@ -1,8 +1,9 @@
 const router = require('koa-router')()
 const mongoose = require('mongoose');
-const jwt=require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const Account = require('../../models/Account');
-const crypto=require('crypto')
+const tkRecord = require('../../models/tkRecord');
+const crypto = require('crypto')
 
 router.prefix('/sys')
 
@@ -14,24 +15,24 @@ router.get('/', async (ctx, next) => {
     ctx.body = accts;
 })
 
-router.post('/login',async(ctx,next)=>{
-    let un=ctx.request.body.username;
-    let up=Enpassword(ctx.request.body.password);
-    try{
-        var accts=await Account.myFind({username:un,password:up})
-        if(accts.length==0){
-            ctx.body={"error":true,"message":"登录失败，请检查用户名和密码是否正确！"}
+router.post('/login', async (ctx, next) => {
+    let un = ctx.request.body.username;
+    let up = Enpassword(ctx.request.body.password);
+    try {
+        var accts = await Account.myFind({ username: un, password: up })
+        if (accts.length == 0) {
+            ctx.body = { "error": true, "message": "登录失败，请检查用户名和密码是否正确！" }
             return;
         }
-        var userinfo={
-            username:accts[0].username,
-            id:accts[0]._id,
-            admin:false
+        var userinfo = {
+            username: accts[0].username,
+            id: accts[0]._id,
+            admin: false
         }
-        let token=jwt.sign(userinfo,"mxthink")
-        ctx.body={"error":false,"token":token}
-    }catch(err){
-        ctx.body={'error':true,"message":"登录失败:"+err.message}
+        let token = jwt.sign(userinfo, "mxthink")
+        ctx.body = { "error": false,'userinfo':userinfo, "token": token }
+    } catch (err) {
+        ctx.body = { 'error': true, "message": "登录失败:" + err.message }
     }
 })
 
@@ -56,38 +57,50 @@ router.post('/search', async (ctx, next) => {
     //     })
 
 })
-router.use(async(ctx,next)=>{
+
+router.use(async (ctx, next) => {
     // console.log('拦截的访问:'+ctx.request.body.token)
-    var token=ctx.request.body.token;
-    if(token){
-        jwt.verify(token,'xmilyhh',function(err,decoded){
-            if(err){
+    var token = ctx.request.body.token;
+    if (token) {
+        jwt.verify(token, 'xmilyhh', function (err, decoded) {
+            if (err) {
 
-            }else{
-                ctx.request.decoded=decoded;
+            } else {
+                ctx.request.decoded = decoded;
                 ///next();
             }
         })
-    }else{
+    } else {
 
     }
-    next();
+    await next();
 })
-router.post('/validsignin',async(ctx,next)=>{
-    var token=ctx.request.body.token;
-    if(token){
-        jwt.verify(token,'mxthink',function(err,decoded){
-            if(err){
-                ctx.body={'signin':false}
-            }else{
-                ctx.body={'signin':true,'userinfo':decoded}
+router.post('/validsignin', async (ctx, next) => {
+    var token = ctx.request.body.token;
+    if (token) {
+        jwt.verify(token, 'mxthink', function (err, decoded) {
+            if (err) {
+                ctx.body = { 'signin': false }
+            } else {
+                ctx.body = { 'signin': true, 'userinfo': decoded }
                 ///next();
             }
         })
-    }else{
-        ctx.body={'signin':false}
+    } else {
+        ctx.body = { 'signin': false }
     }
 })
+
+router.post('/addtkrecord', async (ctx, next) => {
+    let record=ctx.request.body.record;
+    try {
+     var tkrecord = await tkRecord.myCreate(record)
+        ctx.body={'error':false,'record':tkrecord}
+    } catch (err) {
+        ctx.body={'error':true,'message':err.message}
+    }
+})
+
 router.post('/admin', async (ctx, next) => {
     // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
     // ctx.set('Access-Control-Allow-Credentials', true);
@@ -103,9 +116,9 @@ router.get('/cookies', async (ctx, next) => {
     // ctx.set('Access-Control-Allow-Credentials', true);
     console.log(ctx.querystring)
     console.log(ctx.query)
-    var userinfo={
-        username:"xmily",
-        admin:false
+    var userinfo = {
+        username: "xmily",
+        admin: false
     }
 
     // if(ctx.cookies.get('cookname')){
@@ -117,8 +130,8 @@ router.get('/cookies', async (ctx, next) => {
     if (username == password) {
         // ctx.cookies.set('cookname', 'aaaaaaaa')
         // ctx.body = 'cookies写入完成'
-        var token=jwt.sign(userinfo,'xmilyhh');
-        ctx.body={'message':'授权完成','token':token};
+        var token = jwt.sign(userinfo, 'xmilyhh');
+        ctx.body = { 'message': '授权完成', 'token': token };
     } else {
         ctx.body = '授权未成功'
     }
