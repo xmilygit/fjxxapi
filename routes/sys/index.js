@@ -121,6 +121,15 @@ router.post('/savetklesson', async (ctx, next) => {
     }
 })
 
+router.get('/getalltklesson',async(ctx,next)=>{
+    try{
+        var list=await tkLesson.myFindAll()
+        ctx.body={'error':false,'lessonlist':list};
+    }catch(err){
+        ctx.body={'error':true,'message':err.message}
+    }
+})
+
 router.get('/cookies', async (ctx, next) => {
     // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
     // ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');

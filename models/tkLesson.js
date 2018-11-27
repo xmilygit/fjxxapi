@@ -23,10 +23,19 @@ tkLessonDAO.myCreate=async function(doc){
     let temp=await _doc.save();
     return temp;
 }
-
+/* 排序方式
+Room.find({}).sort('-date').exec(function(err, docs) { ... });
+Room.find({}).sort({date: -1}).exec(function(err, docs) { ... });
+Room.find({}).sort({date: 'desc'}).exec(function(err, docs) { ... });
+Room.find({}).sort({date: 'descending'}).exec(function(err, docs) { ... });
+Room.find({}).sort([['date', -1]]).exec(function(err, docs) { ... });
+Room.find({}, null, {sort: '-date'}, function(err, docs) { ... });
+Room.find({}, null, {sort: {date: -1}}, function(err, docs) { ... });
+*/
 //获取所有记录
-tkLessonDAO.myFindAll=async function(){
-    let list=await tkLessonModel.find({}).exec()
+tkLessonDAO.myFindAll=async function(sort){
+    sort=sort||'_id'
+    let list=await tkLessonModel.find({}).sort(sort).exec()
     return list;
 }
 
