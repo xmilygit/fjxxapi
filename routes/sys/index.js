@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const Account = require('../../models/Account');
 const tkRecord = require('../../models/tkRecord');
+const tkLesson=require('../../models/tkLesson');
 const crypto = require('crypto')
 
 router.prefix('/sys')
@@ -30,7 +31,7 @@ router.post('/login', async (ctx, next) => {
             admin: false
         }
         let token = jwt.sign(userinfo, "mxthink")
-        ctx.body = { "error": false,'userinfo':userinfo, "token": token }
+        ctx.body = { "error": false, 'userinfo': userinfo, "token": token }
     } catch (err) {
         ctx.body = { 'error': true, "message": "登录失败:" + err.message }
     }
@@ -92,12 +93,12 @@ router.post('/validsignin', async (ctx, next) => {
 })
 
 router.post('/addtkrecord', async (ctx, next) => {
-    let record=ctx.request.body.record;
+    let record = ctx.request.body.record;
     try {
-     var tkrecord = await tkRecord.myCreate(record)
-        ctx.body={'error':false,'record':tkrecord}
+        var tkrecord = await tkRecord.myCreate(record)
+        ctx.body = { 'error': false, 'record': tkrecord }
     } catch (err) {
-        ctx.body={'error':true,'message':err.message}
+        ctx.body = { 'error': true, 'message': err.message }
     }
 })
 
@@ -108,6 +109,16 @@ router.post('/admin', async (ctx, next) => {
         ctx.body = '已经登录的用户'
     else
         ctx.body = '没有登录的用户'
+})
+
+router.post('/savetklesson', async (ctx, next) => {
+    let lesson=ctx.request.body.lessoninfo;
+    try{
+        var tklesson=await tkLesson.myCreate(lesson)
+        ctx.body={'error':false,'lesson':tklesson};
+    }catch(err){
+        ctx.body={'error':true,'message':err.message};
+    }
 })
 
 router.get('/cookies', async (ctx, next) => {
