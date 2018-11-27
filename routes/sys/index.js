@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const Account = require('../../models/Account');
 const tkRecord = require('../../models/tkRecord');
-const tkLesson=require('../../models/tkLesson');
+const tkLesson = require('../../models/tkLesson');
 const crypto = require('crypto')
 
 router.prefix('/sys')
@@ -112,19 +112,34 @@ router.post('/admin', async (ctx, next) => {
 })
 
 router.post('/savetklesson', async (ctx, next) => {
-    let lesson=ctx.request.body.lessoninfo;
-    try{
-        var tklesson=await tkLesson.myCreate(lesson)
-        ctx.body={'error':false,'lesson':tklesson};
-    }catch(err){
-        ctx.body={'error':true,'message':err.message};
+    let lesson = ctx.request.body.lessoninfo;
+    try {
+        var tklesson = await tkLesson.myCreate(lesson)
+        ctx.body = { 'error': false, 'lesson': tklesson };
+    } catch (err) {              
+        if (err.message.indexOf('duplicate key error') !== -1)
+            ctx.body = { 'error': true, 'message': '课程名称已经存在' }
+        else
+            ctx.body = { 'error': true, 'message': err.message };
     }
 })
 
-router.get('/getalltklesson',async(ctx,next)=>{
+router.get('/getalltklesson', async (ctx, next) => {
+    try {
+        var list = await tkLesson.myFindAll()
+        ctx.body = { 'error': false, 'lessonlist': list };
+    } catch (err) {
+        ctx.body = { 'error': true, 'message': err.message }
+    }
+})
+
+router.get('/getalltklessonpaging',async(ctx,next)=>{
+    let keyword=ctx.querystring.keyword;
+    let pagesize=ctx.querystring.pagesize;
+    let currentpage=ctx.querystring.currentpage;
     try{
-        var list=await tkLesson.myFindAll()
-        ctx.body={'error':false,'lessonlist':list};
+        var data=await tkLesson.myPaging(keyword,pagesize,currentpage);
+        ctx.body={'error':false,'pagingdata':data};
     }catch(err){
         ctx.body={'error':true,'message':err.message}
     }
