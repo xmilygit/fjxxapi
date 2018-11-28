@@ -134,12 +134,22 @@ router.get('/getalltklesson', async (ctx, next) => {
 })
 
 router.get('/getalltklessonpaging',async(ctx,next)=>{
-    let keyword=ctx.querystring.keyword;
-    let pagesize=ctx.querystring.pagesize;
-    let currentpage=ctx.querystring.currentpage;
+    let keyword=ctx.query.keyword;
+    let pagesize=ctx.query.pagesize;
+    let currentpage=ctx.query.currentpage;
     try{
         var data=await tkLesson.myPaging(keyword,pagesize,currentpage);
         ctx.body={'error':false,'pagingdata':data};
+    }catch(err){
+        ctx.body={'error':true,'message':err.message}
+    }
+})
+
+router.get('/deletelesson',async(ctx,next)=>{
+    let id=ctx.query.id;
+    try{
+        var deldata=await tkLesson.myDelete(id);
+        ctx.body={'error':false,'data':deldata};
     }catch(err){
         ctx.body={'error':true,'message':err.message}
     }

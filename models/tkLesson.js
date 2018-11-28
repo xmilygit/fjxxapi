@@ -40,6 +40,12 @@ tkLessonDAO.myFindAll=async function(sort){
     return list;
 }
 
+//删除指定记录
+tkLessonDAO.myDelete=async function(id){
+    let result=await tkLessonModel.deleteOne({_id:id}).exec();
+    return result;
+}
+
 //分页获取记录
 tkLessonDAO.myPaging=async function(keyword,pagesize,currentpage){
     let query={}
