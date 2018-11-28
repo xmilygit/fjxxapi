@@ -124,6 +124,16 @@ router.post('/savetklesson', async (ctx, next) => {
     }
 })
 
+router.post('/edittklesson',async(ctx,next)=>{
+    let lesson=ctx.request.body.lessoninfo;
+    let id=ctx.request.body.id;
+    try{
+
+    }catch(err){
+        
+    }
+})
+
 router.get('/getalltklesson', async (ctx, next) => {
     try {
         var list = await tkLesson.myFindAll()

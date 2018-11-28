@@ -54,8 +54,8 @@ tkLessonDAO.myPaging=async function(keyword,pagesize,currentpage){
     pagesize=pagesize||5;
     currentpage=currentpage||1;
     let start=(currentpage-1)*pagesize;
-    let list=await tkLessonModel.find(query).skip(start).limit(pagesize).sort("_id").exec();
-    let countnum=await tkLessonModel.countDocuments({keyword}).exec();
+    let list=await tkLessonModel.find(query).skip(start).limit(pagesize).sort("-_id").exec();
+    let countnum=await tkLessonModel.countDocuments(query).exec();
     return {"recordset":list,"count":countnum}
 }
 
