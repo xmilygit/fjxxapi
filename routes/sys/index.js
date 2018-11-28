@@ -124,15 +124,6 @@ router.post('/savetklesson', async (ctx, next) => {
     }
 })
 
-router.post('/edittklesson',async(ctx,next)=>{
-    let lesson=ctx.request.body.lessoninfo;
-    let id=ctx.request.body.id;
-    try{
-
-    }catch(err){
-        
-    }
-})
 
 router.get('/getalltklesson', async (ctx, next) => {
     try {
@@ -160,6 +151,26 @@ router.get('/deletelesson',async(ctx,next)=>{
     try{
         var deldata=await tkLesson.myDelete(id);
         ctx.body={'error':false,'data':deldata};
+    }catch(err){
+        ctx.body={'error':true,'message':err.message}
+    }
+})
+
+router.get('/getlessonbyid',async(ctx,next)=>{
+    let id=ctx.query.id;
+    try{
+        var result=await tkLesson.myFind(id);
+        ctx.body={'error':false,'result':result};
+    }catch(err){
+        ctx.body={'error':true,'message':err.message};
+    }
+})
+
+router.post('/edittklesson',async(ctx,next)=>{
+    let doc=ctx.request.body.lessoninfo;
+    try{
+        var result=await tkLesson.myEdit(doc);
+        ctx.body={'error':false,'result':result};
     }catch(err){
         ctx.body={'error':true,'message':err.message}
     }

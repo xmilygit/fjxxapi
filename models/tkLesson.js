@@ -34,15 +34,27 @@ Room.find({}, null, {sort: '-date'}, function(err, docs) { ... });
 Room.find({}, null, {sort: {date: -1}}, function(err, docs) { ... });
 */
 //获取所有记录
-tkLessonDAO.myFindAll=async function(sort){
-    sort=sort||'_id'
-    let list=await tkLessonModel.find({}).sort(sort).exec()
+tkLessonDAO.myFindAll=async function(sort,fields){
+    sort=sort||'-_id';
+    fields=fields||'lessonname'
+    let list=await tkLessonModel.find({},fields).sort(sort).exec()
     return list;
 }
 
 //删除指定记录
 tkLessonDAO.myDelete=async function(id){
     let result=await tkLessonModel.deleteOne({_id:id}).exec();
+    return result;
+}
+//获取指定记录
+tkLessonDAO.myFind=async function(id){
+    let result=await tkLessonModel.findById(id).exec();
+    return result;
+}
+
+//修改指定记录
+tkLessonDAO.myEdit=async function(doc){
+    let result=await tkLessonModel.updateOne({_id:doc.id},doc).exec();
     return result;
 }
 
