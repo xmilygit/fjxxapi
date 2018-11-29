@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const Account = require('../../models/Account');
 const tkRecord = require('../../models/tkRecord');
 const tkLesson = require('../../models/tkLesson');
+const fjxx = require('../../models/Fjxx');
 const crypto = require('crypto')
 
 router.prefix('/sys')
@@ -116,7 +117,7 @@ router.post('/savetklesson', async (ctx, next) => {
     try {
         var tklesson = await tkLesson.myCreate(lesson)
         ctx.body = { 'error': false, 'lesson': tklesson };
-    } catch (err) {              
+    } catch (err) {
         if (err.message.indexOf('duplicate key error') !== -1)
             ctx.body = { 'error': true, 'message': '课程名称已经存在' }
         else
@@ -134,45 +135,45 @@ router.get('/getalltklesson', async (ctx, next) => {
     }
 })
 
-router.get('/getalltklessonpaging',async(ctx,next)=>{
-    let keyword=ctx.query.keyword;
-    let pagesize=ctx.query.pagesize;
-    let currentpage=ctx.query.currentpage;
-    try{
-        var data=await tkLesson.myPaging(keyword,pagesize,currentpage);
-        ctx.body={'error':false,'pagingdata':data};
-    }catch(err){
-        ctx.body={'error':true,'message':err.message}
+router.get('/getalltklessonpaging', async (ctx, next) => {
+    let keyword = ctx.query.keyword;
+    let pagesize = ctx.query.pagesize;
+    let currentpage = ctx.query.currentpage;
+    try {
+        var data = await tkLesson.myPaging(keyword, pagesize, currentpage);
+        ctx.body = { 'error': false, 'pagingdata': data };
+    } catch (err) {
+        ctx.body = { 'error': true, 'message': err.message }
     }
 })
 
-router.get('/deletelesson',async(ctx,next)=>{
-    let id=ctx.query.id;
-    try{
-        var deldata=await tkLesson.myDelete(id);
-        ctx.body={'error':false,'data':deldata};
-    }catch(err){
-        ctx.body={'error':true,'message':err.message}
+router.get('/deletelesson', async (ctx, next) => {
+    let id = ctx.query.id;
+    try {
+        var deldata = await tkLesson.myDelete(id);
+        ctx.body = { 'error': false, 'data': deldata };
+    } catch (err) {
+        ctx.body = { 'error': true, 'message': err.message }
     }
 })
 
-router.get('/getlessonbyid',async(ctx,next)=>{
-    let id=ctx.query.id;
-    try{
-        var result=await tkLesson.myFind(id);
-        ctx.body={'error':false,'result':result};
-    }catch(err){
-        ctx.body={'error':true,'message':err.message};
+router.get('/getlessonbyid', async (ctx, next) => {
+    let id = ctx.query.id;
+    try {
+        var result = await tkLesson.myFind(id);
+        ctx.body = { 'error': false, 'result': result };
+    } catch (err) {
+        ctx.body = { 'error': true, 'message': err.message };
     }
 })
 
-router.post('/edittklesson',async(ctx,next)=>{
-    let doc=ctx.request.body.lessoninfo;
-    try{
-        var result=await tkLesson.myEdit(doc);
-        ctx.body={'error':false,'result':result};
-    }catch(err){
-        ctx.body={'error':true,'message':err.message}
+router.post('/edittklesson', async (ctx, next) => {
+    let doc = ctx.request.body.lessoninfo;
+    try {
+        var result = await tkLesson.myEdit(doc);
+        ctx.body = { 'error': false, 'result': result };
+    } catch (err) {
+        ctx.body = { 'error': true, 'message': err.message }
     }
 })
 
@@ -200,6 +201,21 @@ router.get('/cookies', async (ctx, next) => {
         ctx.body = { 'message': '授权完成', 'token': token };
     } else {
         ctx.body = '授权未成功'
+    }
+})
+
+router.get('/test', async (ctx, next) => {
+    let doc = {
+        username: 'xmily',
+        pid: '450205198008141012',
+    }
+    try {
+        let one=await fjxx.myCreate(doc)
+        console.log(one)
+        ctx.body=one
+    } catch (err) {
+        console.log(err.message)
+        ctx.body=err.message;
     }
 })
 

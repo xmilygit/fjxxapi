@@ -34,10 +34,12 @@ tkRecordDAO.myCreate = async function (doc) {
     let temp = await record.save()
     return temp
 }
-
+//根据条件查询记录
 tkRecordDAO.myFind = async function (conditions) {
     let list = await tkRecordModel.find(conditions).exec()
     return list
 }
+//获取成绩的联合查询
+
 
 module.exports = tkRecordDAO;
