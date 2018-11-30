@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const Account = require('../../models/Account');
 const tkRecord = require('../../models/tkRecord');
 const tkLesson = require('../../models/tkLesson');
-const fjxx = require('../../models/Fjxx');
+const base = require('../../models/Fjxx');
 const crypto = require('crypto')
 
 router.prefix('/sys')
@@ -17,11 +17,12 @@ router.get('/', async (ctx, next) => {
     ctx.body = accts;
 })
 
+//用户登录入口
 router.post('/login', async (ctx, next) => {
     let un = ctx.request.body.username;
     let up = Enpassword(ctx.request.body.password);
     try {
-        var accts = await Account.myFind({ username: un, password: up })
+        var accts = await base.myFindByQuery({ username: un, password: up }, "username _id tkrecords")
         if (accts.length == 0) {
             ctx.body = { "error": true, "message": "登录失败，请检查用户名和密码是否正确！" }
             return;
@@ -59,17 +60,16 @@ router.post('/search', async (ctx, next) => {
     //     })
 
 })
-
+//拦截所有请求，如果有token则将用户信息注入到请求中
 router.use(async (ctx, next) => {
     // console.log('拦截的访问:'+ctx.request.body.token)
     var token = ctx.request.body.token;
     if (token) {
-        jwt.verify(token, 'xmilyhh', function (err, decoded) {
+        jwt.verify(token, 'mxthink', function (err, decoded) {
             if (err) {
 
             } else {
                 ctx.request.decoded = decoded;
-                ///next();
             }
         })
     } else {
@@ -77,26 +77,25 @@ router.use(async (ctx, next) => {
     }
     await next();
 })
+//页面刷新时验证登录状态
 router.post('/validsignin', async (ctx, next) => {
-    var token = ctx.request.body.token;
+    var token = ctx.request.decoded;
     if (token) {
-        jwt.verify(token, 'mxthink', function (err, decoded) {
-            if (err) {
-                ctx.body = { 'signin': false }
-            } else {
-                ctx.body = { 'signin': true, 'userinfo': decoded }
-                ///next();
-            }
-        })
+        ctx.body = { 'signin': true, 'userinfo': token }
     } else {
         ctx.body = { 'signin': false }
     }
 })
-
+//添加用户的键盘练习记录
 router.post('/addtkrecord', async (ctx, next) => {
     let record = ctx.request.body.record;
+    let uid = ctx.request.decoded.id;
+    if (!uid){
+        ctx.body = { 'error': true, 'message': '用户未登录！' }
+        return;
+    }
     try {
-        var tkrecord = await tkRecord.myCreate(record)
+        var tkrecord = await base.myPushdata({_id:uid},record)
         ctx.body = { 'error': false, 'record': tkrecord }
     } catch (err) {
         ctx.body = { 'error': true, 'message': err.message }
@@ -177,6 +176,10 @@ router.post('/edittklesson', async (ctx, next) => {
     }
 })
 
+router.get('/gettkrecord',async(ctx,next)=>{
+
+})
+
 router.get('/cookies', async (ctx, next) => {
     // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
     // ctx.set('Access-Control-Allow-Methods', 'PUT,DELETE,POST,GET');
@@ -206,16 +209,53 @@ router.get('/cookies', async (ctx, next) => {
 
 router.get('/test', async (ctx, next) => {
     let doc = {
-        username: 'xmily',
+        username: 'hh',
         pid: '450205198008141012',
     }
     try {
-        let one=await fjxx.myCreate(doc)
+        let one = await base.myCreate(doc)
         console.log(one)
-        ctx.body=one
+        ctx.body = one
     } catch (err) {
         console.log(err.message)
-        ctx.body=err.message;
+        ctx.body = err.message;
+    }
+})
+
+router.get('/dbinsertsubdata', async (ctx, next) => {
+    let data = {
+        "score": 90,
+        "rightrate": "100",
+        "time": "00:00:05",
+        "finishdate": "2018-11-30 08:34:33",
+    }
+    try {
+        let update = await base.myUpdate({ _id: '5c008b293fb9b72ec46c2ac6' }, { '$push': { 'tkRecords': data } });
+        let one = await base.myFindById({ _id: '5c008b293fb9b72ec46c2ac6' })
+        ctx.body = one
+    } catch (err) {
+        ctx.body = err.message
+    }
+})
+
+router.get('/dbinsertobjectdata', async (ctx, next) => {
+    let data = {
+        "classno": "小学2013级1班",
+        "born": "20060902",
+        "name": "劳鼎淋",
+        "gender": "男",
+        "ethnic": "苗族",
+        "regaddress": "融安县长安镇桔香南路12号",
+        "homeaddress": "融安县长安镇龙潭街18号,融安县长安镇龙潭街18号",
+        "contact": "13768853300",
+        "fsname": "劳益锋,贾丽萍",
+        "grade": "小学2013级"
+    }
+    try {
+        let result = await base.myUpdateField({ _id: '5c00a2436ba3c50d5cf77f1f' }, { baseinfo: data })
+        ctx.body = result;
+    } catch (err) {
+        ctx.body = err.message;
     }
 })
 
