@@ -1,6 +1,7 @@
 var mongoose = require('mongoose')
 
 var baseSchema = new mongoose.Schema({
+    _id:mongoose.Schema.Types.ObjectId,
     username: {
         type: String,
         required: [true, '用户名必须填写']
@@ -90,6 +91,14 @@ baseDAO.myPushdata=async function(query,data){
         }
     )
     return result
+}
+
+//针对该库的聚合操作
+baseDAO.myAggregate=async function(aggregations){
+    let result=await baseModel.aggregate(
+        aggregations
+    ).exec();
+    return result;
 }
 
 baseDAO.myCreate=async function(doc){

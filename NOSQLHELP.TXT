@@ -1,0 +1,99 @@
+db.base.aggregate([
+{$unwind:'$tkRecords'},
+{$match:{'tkRecords.lesson':'lesson15',_id:ObjectId("5c00df7ad4125885832f4edb")}},
+{'$project':
+    {
+        'lesson':'$tkRecords.lesson',
+            "score" :"$tkRecords.score",
+            "rightrate" :"$tkRecords.rightrate",
+            "time" : "$tkRecords.time",
+            "finishdate" :{$dateToString:{format:"%Y-%m-%d %H:%M:%S",date:"$tkRecords.finishdate"}},
+        _id:0
+    },
+    
+}
+])
+
+
+db.base.aggregate([
+//{$match:{_id:ObjectId("5c00df7ad4125885832f4edb")}},
+
+{$unwind:'$tkRecords'},
+{$match:{'tkRecords.lesson':'lesson15'}},
+{$group:{
+    _id:"$username",
+    score:"$first",//{$max:"$tkRecords.score"},
+}
+},
+//{$sort:{"tkRecords.score":-1}},
+// 
+// {$sort:{"tkRecords.score":-1}},
+// 
+// {'$project':
+//     {
+//         'lesson':'$tkRecords.lesson',
+//             "score" :"$tkRecords.score",
+//             "rightrate" :"$tkRecords.rightrate",
+//             "time" : "$tkRecords.time",
+//         "finishdate":"$tkRecords.finishdate",
+//             "finishdate2" :{$dateToString:{format:"%Y-%m-%d %H:%M:%S",date:"$tkRecords.finishdate"}},
+//         _id:0
+// 
+//     },
+//     
+// },
+// 
+])
+
+
+db.base.aggregate([
+{$unwind:'$tkRecords'},
+{$match:{'tkRecords.lesson':'lesson15'}},
+{$sort:{"tkRecords.score":-1}},
+{$group:{
+    _id:"$username",
+    score:{"$first":"$$ROOT"},
+}
+},
+{'$project':
+    {
+        'username':'$_id',
+        'lesson':'$score.tkRecords.lesson',
+            "score" :"$score.tkRecords.score",
+            "rightrate" :"$score.tkRecords.rightrate",
+            "time" : "$score.tkRecords.time",
+        "finishdate":"$score.tkRecords.finishdate",
+    }
+},
+{$sort:{"score":-1}},
+])
+
+
+
+//获取指定用户最高练习记录
+db.base.aggregate([
+{$match:{'username':'张奕格'}},
+{$unwind:'$tkRecords'},
+{$sort:{"tkRecords.score":-1}},
+{$group:{
+    _id:"$username",
+    score:{"$first":"$tkRecords.score"},
+}
+},
+])
+
+//根据用户最高得分云获取名次
+db.base.aggregate([
+{$match:{'tkRecords.lesson':'lesson15','baseinfo.classno': { $exists: true }}},
+{$unwind:'$tkRecords'},
+{$sort:{"tkRecords.score":-1}},
+{$group:{
+    _id:"$username",
+    score:{"$first":"$$ROOT"},
+}
+},
+{$match:{'score.tkRecords.score':{$gt:195.6}}},
+{
+      $count: "rank"
+}, 
+])
