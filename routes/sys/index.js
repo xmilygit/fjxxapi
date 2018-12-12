@@ -30,7 +30,7 @@ router.post('/login', async (ctx, next) => {
         var userinfo = {
             username: accts[0].username,
             id: accts[0]._id,
-            admin: false
+            admin: accts[0].username=='徐明'?true:false
         };
         let token = jwt.sign(userinfo, "mxthink")
         ctx.body = { "error": false, 'userinfo': userinfo, userotherinfo: accts[0], "token": token }
@@ -62,7 +62,7 @@ router.post('/search', async (ctx, next) => {
 })
 //拦截所有请求，如果有token则将用户信息注入到请求中
 router.use(async (ctx, next) => {
-    // console.log('拦截的访问:'+ctx.request.body.token)
+    console.log('拦截的访问:'+ctx.request.href)
     let posttoken = ctx.request.body.token;
     var token = posttoken || ctx.query.token;
     if (token) {
