@@ -7,6 +7,7 @@ var baseSchema = new mongoose.Schema({
         required: [true, '用户名必须填写']
     },
     password: String,
+    password2:String,
     gender: String,
     baseinfo:Object,
     newstudentinfo:Object,
@@ -114,6 +115,52 @@ baseDAO.myUpdate=async function(query,value){
 baseDAO.myUpdateField=async function(query,value){
     let result=await baseModel.update(query,value).exec();
     return result;
+}
+
+//批量添加用户
+baseDAO.insertManyAccount=async function(data){
+    let result=await baseModel.insertMany(data)
+    return result;
+}
+
+//分页查询
+
+baseDAO.myPaging=async function (keyword, pagesize, lastid) {
+    //throw new Error("数据库查询异常:");
+    //return;
+    var query = {}
+    let reco = []
+    if (lastid) {
+        query = {
+            $or: [
+                { username: { $regex: keyword } },
+                { pid: { $regex: keyword } }
+            ],
+            _id: { $lt: lastid }
+        }
+    } else {
+        query = {
+            $or: [
+                { username: { $regex: keyword } },
+                { pid: { $regex: keyword } }
+            ]
+        }
+    }
+
+    let countQuery={
+        $or:[
+            {username:{$regex:keyword}},
+            {pid:{$regex:keyword}}
+        ]
+    }
+
+    reco = await baseModel
+            .find(query)
+            .sort({ _id: -1 })
+            .limit(pagesize)
+            .exec();
+    let count=await baseModel.countDocuments(countQuery).exec();
+    return {"recordset":reco,"count":count}
 }
 
 module.exports=baseDAO;

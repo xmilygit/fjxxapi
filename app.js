@@ -11,6 +11,8 @@ const db=require('./cfg/dbconfig');
 const index = require('./routes/index')
 const users = require('./routes/users')
 const sys=require('./routes/sys/index');
+const typekey=require('./routes/typekey/index');
+const test=require('./routes/test');
 
 // error handler
 onerror(app)
@@ -36,10 +38,21 @@ app.use(async (ctx, next) => {
   console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
+
+//koa-body
+// app.use(koabody({
+//   multipart:true,
+//   formidable:{
+//     maxFileSize:10*1024*1024
+//   }
+// }))
+
 // routes
 app.use(index.routes(), index.allowedMethods())
 app.use(users.routes(), users.allowedMethods())
 app.use(sys.routes(),sys.allowedMethods())
+app.use(typekey.routes(),typekey.allowedMethods())
+app.use(test.routes(),test.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)

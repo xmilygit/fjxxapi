@@ -1,12 +1,15 @@
 const router = require('koa-router')()
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const Account = require('../../models/Account');
-const tkRecord = require('../../models/tkRecord');
-const tkLesson = require('../../models/tkLesson');
+// const Account = require('../../models/Account');
+// const tkRecord = require('../../models/tkRecord');
+// const tkLesson = require('../../models/tkLesson');
 const base = require('../../models/Fjxx');
 const crypto = require('crypto')
-
+const fs = require('fs')
+const path = require('path')
+const multer = require('koa-multer');
+const xls = require('xls-to-json')
 router.prefix('/sys')
 
 router.get('/', async (ctx, next) => {
@@ -22,7 +25,7 @@ router.post('/login', async (ctx, next) => {
     let un = ctx.request.body.username;
     let up = Enpassword(ctx.request.body.password);
     try {
-        var accts = await base.myFindByQuery({ username: un, password: up }, "username _id baseinfo.classno")
+        var accts = await base.myFindByQuery({ username: un, password2: up }, "username _id baseinfo.classno")
         if (accts.length == 0) {
             ctx.body = { "error": true, "message": "登录失败，请检查用户名和密码是否正确！" }
             return;
@@ -30,7 +33,7 @@ router.post('/login', async (ctx, next) => {
         var userinfo = {
             username: accts[0].username,
             id: accts[0]._id,
-            admin: accts[0].username=='徐明'?true:false
+            admin: accts[0].username == '徐明' ? true : false
         };
         let token = jwt.sign(userinfo, "mxthink")
         ctx.body = { "error": false, 'userinfo': userinfo, userotherinfo: accts[0], "token": token }
@@ -44,7 +47,7 @@ router.post('/search', async (ctx, next) => {
     var pagesize = ctx.request.body.pagesize;
     var lastid = ctx.request.body.lastid;
     try {
-        var accts = await Account.myPaging(keyword, pagesize, lastid);
+        var accts = await base.myPaging(keyword, pagesize, lastid);
         ctx.body = { "error": false, "result": accts };
         //console.log(accts);
     } catch (err) {
@@ -62,7 +65,7 @@ router.post('/search', async (ctx, next) => {
 })
 //拦截所有请求，如果有token则将用户信息注入到请求中
 router.use(async (ctx, next) => {
-    console.log('拦截的访问:'+ctx.request.href)
+    console.log('拦截的访问:' + ctx.request.href)
     let posttoken = ctx.request.body.token;
     var token = posttoken || ctx.query.token;
     if (token) {
@@ -87,21 +90,6 @@ router.post('/validsignin', async (ctx, next) => {
         ctx.body = { 'signin': false }
     }
 })
-//添加用户的键盘练习记录
-router.post('/addtkrecord', async (ctx, next) => {
-    let record = ctx.request.body.record;
-    if (!ctx.request.decoded) {
-        ctx.body = { 'error': true, 'message': '用户未登录！' }
-        return;
-    }
-    let uid = ctx.request.decoded.id
-    try {
-        var tkrecord = await base.myPushdata({ _id: uid }, record)
-        ctx.body = { 'error': false, 'record': tkrecord }
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
 
 router.post('/admin', async (ctx, next) => {
     // ctx.set('Access-Control-Allow-Origin', 'http://192.168.123.151:8080');
@@ -110,297 +98,6 @@ router.post('/admin', async (ctx, next) => {
         ctx.body = '已经登录的用户'
     else
         ctx.body = '没有登录的用户'
-})
-
-router.post('/savetklesson', async (ctx, next) => {
-    let lesson = ctx.request.body.lessoninfo;
-    try {
-        var tklesson = await tkLesson.myCreate(lesson)
-        ctx.body = { 'error': false, 'lesson': tklesson };
-    } catch (err) {
-        if (err.message.indexOf('duplicate key error') !== -1)
-            ctx.body = { 'error': true, 'message': '课程名称已经存在' }
-        else
-            ctx.body = { 'error': true, 'message': err.message };
-    }
-})
-
-
-router.get('/getalltklesson', async (ctx, next) => {
-    try {
-        var list = await tkLesson.myFindAll()
-        ctx.body = { 'error': false, 'lessonlist': list };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
-
-router.get('/getalltklessonpaging', async (ctx, next) => {
-    let keyword = ctx.query.keyword;
-    let pagesize = ctx.query.pagesize;
-    let currentpage = ctx.query.currentpage;
-    try {
-        var data = await tkLesson.myPaging(keyword, pagesize, currentpage);
-        ctx.body = { 'error': false, 'pagingdata': data };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
-
-router.get('/deletelesson', async (ctx, next) => {
-    let id = ctx.query.id;
-    try {
-        var deldata = await tkLesson.myDelete(id);
-        ctx.body = { 'error': false, 'data': deldata };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
-
-router.get('/getlessonbyid', async (ctx, next) => {
-    let id = ctx.query.id;
-    try {
-        var result = await tkLesson.myFind(id);
-        ctx.body = { 'error': false, 'result': result };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message };
-    }
-})
-
-router.post('/edittklesson', async (ctx, next) => {
-    let doc = ctx.request.body.lessoninfo;
-    try {
-        var result = await tkLesson.myEdit(doc);
-        ctx.body = { 'error': false, 'result': result };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
-//获取当前用户指定课程的所有练习记录
-router.get('/gettkrecord', async (ctx, next) => {
-    //let id=ctx.request.decoded.id;
-    if (!ctx.request.decoded) {
-        ctx.body = { 'error': true, 'message': '请先登录' };
-        return;
-    };
-    let id = ctx.request.decoded.id;
-    let lesson = ctx.query.lesson;
-    let aggregations = [
-        { $match: { _id: mongoose.Types.ObjectId(id) } },
-        { $unwind: '$tkRecords' },
-        { $match: { 'tkRecords.lesson': lesson } },
-        {
-            '$project':
-            {
-                'lesson': '$tkRecords.lesson',
-                "score": "$tkRecords.score",
-                "rightrate": "$tkRecords.rightrate",
-                "time": "$tkRecords.time",
-                //"finishdate": { $dateToString: { format: "%Y-%m-%d %H:%M:%S", date: "$tkRecords.finishdate" } },
-                "finishdate": "$tkRecords.finishdate",
-                _id: 0,
-                //"id":"$tkRecords._id"
-            },
-
-        },
-        { $sort: { "finishdate": -1 } }
-    ]
-    try {
-        // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
-        var result = await base.myAggregate(aggregations)
-        //console.log(result)
-        ctx.body = { 'error': false, 'result': result };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
-
-//获取指定课程的所有练习者练习记录的最好成绩
-router.get('/gettkrecordrank', async (ctx, next) => {
-    let lesson = ctx.query.lesson;
-    let aggregations = [
-        { $unwind: '$tkRecords' },
-        { $match: { 'tkRecords.lesson': lesson, 'baseinfo.classno': { $exists: true } } },
-        { $sort: { "tkRecords.score": -1 } },
-        {
-            $group: {
-                _id: "$username",
-                score: { "$first": "$$ROOT" },
-            }
-        },
-        {
-            '$project':
-            {
-                'username': '$_id',
-                'lesson': '$score.tkRecords.lesson',
-                "score": "$score.tkRecords.score",
-                "rightrate": "$score.tkRecords.rightrate",
-                "time": "$score.tkRecords.time",
-                "finishdate": "$score.tkRecords.finishdate",
-                "class": "$score.baseinfo.classno",
-                _id: 0
-            }
-        },
-        { $sort: { "score": -1 } },
-
-    ]
-    try {
-        // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
-        var result = await base.myAggregate(aggregations)
-        //console.log(result)
-        ctx.body = { 'error': false, 'result': result };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-})
-
-//获取用户所在班级的练习成绩排名
-router.get('/gettkrecordrankbyclass', async (ctx, next) => {
-    //let id=ctx.request.decoded.id;
-    if (!ctx.request.decoded) {
-        ctx.body = { 'error': true, 'message': '请先登录' };
-        return;
-    };
-    let classno = ctx.query.classno;
-    let lesson = ctx.query.lesson;
-    let aggregations = [
-        { $match: { 'baseinfo.classno': classno } },
-        { $unwind: '$tkRecords' },
-        { $match: { 'tkRecords.lesson': lesson } },
-        { $sort: { "tkRecords.score": -1 } },
-        {
-            $group: {
-                _id: "$username",
-                score: { "$first": "$$ROOT" },
-            }
-        },
-        {
-            '$project':
-            {
-                'username': '$_id',
-                'lesson': '$score.tkRecords.lesson',
-                "score": "$score.tkRecords.score",
-                "rightrate": "$score.tkRecords.rightrate",
-                "time": "$score.tkRecords.time",
-                "finishdate": "$score.tkRecords.finishdate",
-                "class": "$score.baseinfo.classno",
-                _id: 0
-            }
-        },
-        { $sort: { "score": -1 } },
-    ]
-    try {
-        // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
-        var result = await base.myAggregate(aggregations)
-        //console.log(result)
-        ctx.body = { 'error': false, 'result': result };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-
-})
-
-//获取用户当前课程最好成绩在班级中的排名
-router.get('/getuserrankbyclass', async (ctx, next) => {
-    //let id=ctx.request.decoded.id;
-    if (!ctx.request.decoded) {
-        ctx.body = { 'error': true, 'message': '请先登录' };
-        return;
-    };
-    let classno = ctx.query.classno;
-    let lesson = ctx.query.lesson;
-    let aggregations = [
-        { $match: { '_id': mongoose.Types.ObjectId(ctx.request.decoded.id) } },
-        { $unwind: '$tkRecords' },
-        { $match: { 'tkRecords.lesson': lesson } },
-        { $sort: { "tkRecords.score": -1 } },
-        {
-            $group: {
-                _id: "$username",
-                score: { "$first": "$tkRecords.score" },
-            }
-        },
-    ]
-    try {
-        // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
-        var result = await base.myAggregate(aggregations)
-        //console.log(result)
-        if(result.length<=0){
-            ctx.body={'error':false,'message':'你还没有当前课程的练习记录，快来练习吧！'}
-            return;
-        }
-        var result2=await base.myAggregate([
-                { $match: { 'tkRecords.lesson': lesson, 'baseinfo.classno': classno } },
-                { $unwind: '$tkRecords' },
-                { $sort: { "tkRecords.score": -1 } },
-                {
-                    $group: {
-                        _id: "$username",
-                        score: { "$first": "$$ROOT" },
-                    }
-                },
-                { $match: { 'score.tkRecords.score': { $gt: result[0].score } } },
-                {
-                    $count: "rank"
-                },
-            ]
-        )
-        ctx.body = { 'error': false, 'result': result2 };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-
-})
-
-//获取用户当前课程最好成绩在全校中的排名
-router.get('/getuserrankbyschool', async (ctx, next) => {
-    //let id=ctx.request.decoded.id;
-    if (!ctx.request.decoded) {
-        ctx.body = { 'error': true, 'message': '请先登录' };
-        return;
-    };
-    // let classno = ctx.query.classno;
-    let lesson = ctx.query.lesson;
-    let aggregations = [
-        { $match: { '_id': mongoose.Types.ObjectId(ctx.request.decoded.id) } },
-        { $unwind: '$tkRecords' },
-        { $match: { 'tkRecords.lesson': lesson } },
-        { $sort: { "tkRecords.score": -1 } },
-        {
-            $group: {
-                _id: "$username",
-                score: { "$first": "$tkRecords.score" },
-            }
-        },
-    ]
-    try {
-        // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
-        var result = await base.myAggregate(aggregations)
-        if(result.length<=0){
-            ctx.body={'error':false,'message':'你还没有当前课程的练习记录，快来练习吧！'}
-            return;
-        }
-        var result2=await base.myAggregate([
-                { $match: { 'tkRecords.lesson': lesson,'baseinfo.classno':{$exists:true} } },
-                { $unwind: '$tkRecords' },
-                { $sort: { "tkRecords.score": -1 } },
-                {
-                    $group: {
-                        _id: "$username",
-                        score: { "$first": "$$ROOT" },
-                    }
-                },
-                { $match: { 'score.tkRecords.score': { $gt: result[0].score } } },
-                {
-                    $count: "rank"
-                },
-            ]
-        )
-        ctx.body = { 'error': false, 'result': result2 };
-    } catch (err) {
-        ctx.body = { 'error': true, 'message': err.message }
-    }
-
 })
 
 router.get('/cookies', async (ctx, next) => {
@@ -482,6 +179,64 @@ router.get('/dbinsertobjectdata', async (ctx, next) => {
     }
 })
 
+//测试上传用koa-multer
+//控制上传文件存储方式，如果不设置默认情况下文件上传以随机字符且无后缀来存放
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, '../../public/upload'))
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
+//excel转换json的Promise方法
+function exceltojson(filepath) {
+    return new Promise(function (resolve, reject) {
+        xls({
+            input: filepath,
+            output: null,
+            sheet: '导入'
+        }, function (err, result) {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(result)
+            }
+        })
+    })
+}
+
+var limits = { fileSize: 10 * 1024 * 1024 }
+var upload = multer({ storage: storage, limits: limits })
+router.post('/importaccount', upload.single('file'), async (ctx, next) => {
+    let newaccount = [];
+    try {
+        let items = await exceltojson(ctx.req.file.path)
+        items.forEach(item => {
+            newaccount.push({
+                username: item.username,
+                gender: item.gender,
+                pid: item.pid,
+                sid: item.sid,
+                password: Enpassword(item.pid.substr(12, 6)),
+                password2: Enpassword(item.born),
+                baseinfo: {
+                    classno: item.classno,
+                    born: item.born,
+                    regaddress: item.regaddress,
+                    homeaddress: item.homeaddress,
+                    contact: item.contact,
+                    grade: item.grade
+                }
+            })
+        });
+        let result = await base.insertManyAccount(newaccount);
+        // ctx.body = newaccount;
+        ctx.body = { 'error': false, 'result': '成功导入' + result.length + '条记录' }
+    } catch (err) {
+        ctx.body = { 'error': true, 'message': err.message };
+    }
+})
 //密码HASH
 function Enpassword(password) {
     var sha1 = crypto.createHash('sha1');
