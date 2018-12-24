@@ -8,7 +8,24 @@ const base = require('../../models/Fjxx');
 const crypto = require('crypto')
 router.prefix('/typekey')
 
+//拦截所有请求，如果有token则将用户信息注入到请求中
+router.use(async (ctx, next) => {
+    console.log('拦截的访问:' + ctx.request.href)
+    let posttoken = ctx.request.body.token;
+    var token = posttoken || ctx.query.token;
+    if (token) {
+        jwt.verify(token, 'mxthink', function (err, decoded) {
+            if (err) {
 
+            } else {
+                ctx.request.decoded = decoded;
+            }
+        })
+    } else {
+
+    }
+    await next();
+})
 //添加用户的键盘练习记录
 router.post('/addtkrecord', async (ctx, next) => {
     let record = ctx.request.body.record;
