@@ -260,27 +260,30 @@ router.get('/getuserrankbyclass', async (ctx, next) => {
         // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
         var result = await base.myAggregate(aggregations)
         //console.log(result)
-        if(result.length<=0){
-            ctx.body={'error':false,'message':'你还没有当前课程的练习记录，快来练习吧！'}
+        if (result.length <= 0) {
+            ctx.body = { 'error': false, 'message': '你还没有当前课程的练习记录，快来练习吧！' }
             return;
         }
-        var result2=await base.myAggregate([
-                { $match: { 'tkRecords.lesson': lesson, 'baseinfo.classno': classno } },
-                { $unwind: '$tkRecords' },
-                { $sort: { "tkRecords.score": -1 } },
-                {
-                    $group: {
-                        _id: "$username",
-                        score: { "$first": "$$ROOT" },
-                    }
-                },
-                { $match: { 'score.tkRecords.score': { $gt: result[0].score } } },
-                {
-                    $count: "rank"
-                },
-            ]
+        var result2 = await base.myAggregate([
+            { $match: { 'tkRecords.lesson': lesson, 'baseinfo.classno': classno } },
+            { $unwind: '$tkRecords' },
+            { $sort: { "tkRecords.score": -1 } },
+            {
+                $group: {
+                    _id: "$username",
+                    score: { "$first": "$$ROOT" },
+                }
+            },
+            { $match: { 'score.tkRecords.score': { $gt: result[0].score } } },
+            {
+                $count: "rank"
+            },
+        ]
         )
-        ctx.body = { 'error': false, 'result': result2 };
+        if (result2.length == 0)
+            ctx.body = { 'error': false, 'result': 1 }
+        else
+            ctx.body = { 'error': false, 'result': result2[0].rank + 1 };
     } catch (err) {
         ctx.body = { 'error': true, 'message': err.message }
     }
@@ -311,27 +314,30 @@ router.get('/getuserrankbyschool', async (ctx, next) => {
     try {
         // var result = await base.myFindByQuery({ '_id': id, 'tkRecords.lesson': lesson }, "tkRecords -_id");
         var result = await base.myAggregate(aggregations)
-        if(result.length<=0){
-            ctx.body={'error':false,'message':'你还没有当前课程的练习记录，快来练习吧！'}
+        if (result.length <= 0) {
+            ctx.body = { 'error': false, 'message': '你还没有当前课程的练习记录，快来练习吧！' }
             return;
         }
-        var result2=await base.myAggregate([
-                { $match: { 'tkRecords.lesson': lesson,'baseinfo.classno':{$exists:true} } },
-                { $unwind: '$tkRecords' },
-                { $sort: { "tkRecords.score": -1 } },
-                {
-                    $group: {
-                        _id: "$username",
-                        score: { "$first": "$$ROOT" },
-                    }
-                },
-                { $match: { 'score.tkRecords.score': { $gt: result[0].score } } },
-                {
-                    $count: "rank"
-                },
-            ]
+        var result2 = await base.myAggregate([
+            { $match: { 'tkRecords.lesson': lesson, 'baseinfo.classno': { $exists: true } } },
+            { $unwind: '$tkRecords' },
+            { $sort: { "tkRecords.score": -1 } },
+            {
+                $group: {
+                    _id: "$username",
+                    score: { "$first": "$$ROOT" },
+                }
+            },
+            { $match: { 'score.tkRecords.score': { $gt: result[0].score } } },
+            {
+                $count: "rank"
+            },
+        ]
         )
-        ctx.body = { 'error': false, 'result': result2 };
+        if (result2.length == 0)
+            ctx.body = { 'error': false, 'result': 1 }
+        else
+            ctx.body = { 'error': false, 'result': result2[0].rank + 1 };
     } catch (err) {
         ctx.body = { 'error': true, 'message': err.message }
     }

@@ -34,7 +34,7 @@ router.post('/login', async (ctx, next) => {
             username: accts[0].username,
             id: accts[0]._id,
             admin: accts[0].username == '徐明' ? true : false,
-            classno:accts[0].baseinfo.classno
+            classno:accts[0].baseinfo?accts[0].baseinfo.classno:'非学生用户'
         };
         let token = jwt.sign(userinfo, "mxthink")
         ctx.body = { "error": false, 'userinfo': userinfo, userotherinfo: accts[0], "token": token }
