@@ -59,14 +59,15 @@ tkLessonDAO.myEdit=async function(doc){
 }
 
 //分页获取记录
-tkLessonDAO.myPaging=async function(keyword,pagesize,currentpage){
+tkLessonDAO.myPaging=async function(keyword,pagesize,currentpage,sort){
+    sort=sort||'-_id';
     let query={}
     if(keyword)
         query={lessonname:{$regex:keyword}}
     pagesize=pagesize||5;
     currentpage=currentpage||1;
     let start=(currentpage-1)*pagesize;
-    let list=await tkLessonModel.find(query).skip(start).limit(pagesize).sort("-_id").exec();
+    let list=await tkLessonModel.find(query).skip(start).limit(pagesize).sort(sort).exec();
     let countnum=await tkLessonModel.countDocuments(query).exec();
     return {"recordset":list,"count":countnum}
 }

@@ -58,8 +58,9 @@ router.post('/savetklesson', async (ctx, next) => {
 
 //获取键盘练习课程
 router.get('/getalltklesson', async (ctx, next) => {
+    let sort=ctx.query.sort
     try {
-        var list = await tkLesson.myFindAll()
+        var list = await tkLesson.myFindAll(sort)
         ctx.body = { 'error': false, 'lessonlist': list };
     } catch (err) {
         ctx.body = { 'error': true, 'message': err.message }
@@ -71,8 +72,9 @@ router.get('/getalltklessonpaging', async (ctx, next) => {
     let keyword = ctx.query.keyword;
     let pagesize = ctx.query.pagesize;
     let currentpage = ctx.query.currentpage;
+    let sort=ctx.query.sort;
     try {
-        var data = await tkLesson.myPaging(keyword, pagesize, currentpage);
+        var data = await tkLesson.myPaging(keyword, pagesize, currentpage,sort);
         ctx.body = { 'error': false, 'pagingdata': data };
     } catch (err) {
         ctx.body = { 'error': true, 'message': err.message }
