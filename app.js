@@ -12,7 +12,9 @@ const index = require('./routes/index')
 const users = require('./routes/users')
 const sys=require('./routes/sys/index');
 const typekey=require('./routes/typekey/index');
+const sitenav=require('./routes/sitenav/index')
 const test=require('./routes/test');
+
 
 // error handler
 onerror(app)
@@ -52,6 +54,7 @@ app.use(index.routes(), index.allowedMethods())
 app.use(users.routes(), users.allowedMethods())
 app.use(sys.routes(),sys.allowedMethods())
 app.use(typekey.routes(),typekey.allowedMethods())
+app.use(sitenav.routes(),sitenav.allowedMethods())
 app.use(test.routes(),test.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {

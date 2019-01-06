@@ -1,9 +1,11 @@
 var mongoose = require('mongoose')
 
 var linkSchema=new mongoose.Schema({
-    _id:mongoose.Schema.Types.ObjectId,
+    // _id:mongoose.Schema.Types.ObjectId,
     title:{
         type:String,
+        unique:true,
+        index:true,
         required:[true,'链接标题必须填写'],
     },
     url:{
@@ -16,10 +18,18 @@ var linkSchema=new mongoose.Schema({
     }
 },{collection:'sitenavlink'});
 
-var linkModel=mongoose.model('link',linkSchema)
+var linkModel=mongoose.model('sitenavlink',linkSchema)
 
 function linkDAO(linkdao){
     this.linkdao=linkdao;
+}
+//获取所有
+linkDAO.FindAll=async function(sort,fields){
+    sort=sort||'-_id';
+    fields=fields||'title url show'
+    let list=await linkModel.find({},fields).sort(sort).exec()
+    //let list=await linkModel.find({}).sort(sort).exec()
+    return list;
 }
 
 linkDAO.FindById=async function(id,fields){
@@ -52,9 +62,21 @@ linkDAO.Save=async function(doc){
 }
 
 //更新
-linkDAO.UpdateDoc=async function(query,value){
-    let result=await linkModel.update(query,value).exec();
+linkDAO.Edit=async function(doc){
+    let result=await linkModel.updateOne({_id:doc.id},doc).exec();
     return result;
 }
-
+//分页获取记录
+linkDAO.myPaging=async function(keyword,pagesize,currentpage,sort){
+    sort=sort||'-_id';
+    let query={}
+    if(keyword)
+        query={title:{$regex:keyword}}
+    pagesize=pagesize||5;
+    currentpage=currentpage||1;
+    let start=(currentpage-1)*pagesize;
+    let list=await linkModel.find(query).skip(start).limit(pagesize).sort(sort).exec();
+    let countnum=await linkModel.countDocuments(query).exec();
+    return {"recordset":list,"count":countnum}
+}
 module.exports=linkDAO;
