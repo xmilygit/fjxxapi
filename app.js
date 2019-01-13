@@ -11,6 +11,7 @@ const db=require('./cfg/dbconfig');
 const index = require('./routes/index')
 const users = require('./routes/users')
 const sys=require('./routes/sys/index');
+const mark=require('./routes/sys/mark');
 const typekey=require('./routes/typekey/index');
 const sitenav=require('./routes/sitenav/index')
 const test=require('./routes/test');
@@ -55,7 +56,7 @@ app.use(users.routes(), users.allowedMethods())
 app.use(sys.routes(),sys.allowedMethods())
 app.use(typekey.routes(),typekey.allowedMethods())
 app.use(sitenav.routes(),sitenav.allowedMethods())
-app.use(test.routes(),test.allowedMethods())
+app.use(mark.routes(),mark.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)

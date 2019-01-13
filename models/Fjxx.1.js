@@ -60,6 +60,11 @@ var baseSchema = new mongoose.Schema({
     }]
 }, { collection: 'base' });
 
+var baseModel = mongoose.model('base', baseSchema)
+
+function baseDAO(basedao) {
+    this.basedao = basedao;
+}
 //根据ID查找记录，并返回所有字段
 // baseDAO.myFindById=async function(id){
 //     return await baseModel.findById(id).exec()
@@ -67,28 +72,28 @@ var baseSchema = new mongoose.Schema({
 //根据ID查找记录并返回（全部/指定）字段
 //myFindById('15445445454')
 //myFindById('15445445454','name gender')  myFindById('15445445454','-name -gender')  
-baseSchema.statics.myFindById=async function(id,fields){
+baseDAO.myFindById=async function(id,fields){
     if(fields)
     {
-        return await this.findById(id,fields).exec()
+        return await baseModel.findById(id,fields).exec()
     }
-    return await this.findById(id).exec()
+    return await baseModel.findById(id).exec()
 }
 
 //根据条件查找记录并返回（全部/指定）字段
 //myFindByQuery({"_id":'1231231231232'})
 //myFindByQuery({"_id":'1231231231232'},'name gender')  myFindByQuery({"_id":'1231231231232'},'-name -gender')  
-baseSchema.statics.myFindByQuery=async function(query,fields){
+baseDAO.myFindByQuery=async function(query,fields){
     if(fields)
     {
-        return await this.find(query,fields).exec()
+        return await baseModel.find(query,fields).exec()
     }
-    return await this.find(query).exec()
+    return await baseModel.find(query).exec()
 }
 
 //给符合查询条件的记录，添加子记录
-baseSchema.statics.myPushdata=async function(query,data){
-    let result=await this.updateOne(
+baseDAO.myPushdata=async function(query,data){
+    let result=await baseModel.updateOne(
         query,
         {
             "$push":{
@@ -100,37 +105,37 @@ baseSchema.statics.myPushdata=async function(query,data){
 }
 
 //针对该库的聚合操作
-baseSchema.statics.myAggregate=async function(aggregations){
-    let result=await this.aggregate(
+baseDAO.myAggregate=async function(aggregations){
+    let result=await baseModel.aggregate(
         aggregations
     ).exec();
     return result;
 }
 
-baseSchema.statics.myCreate=async function(doc){
+baseDAO.myCreate=async function(doc){
     let one=new baseModel(doc);
     let temp=await one.save();
     return temp
 }
 
-baseSchema.statics.myUpdate=async function(query,value){
-    let result=await this.update(query,value).exec();
+baseDAO.myUpdate=async function(query,value){
+    let result=await baseModel.update(query,value).exec();
     return result;
 }
-baseSchema.statics.myUpdateField=async function(query,value){
-    let result=await this.update(query,value).exec();
+baseDAO.myUpdateField=async function(query,value){
+    let result=await baseModel.update(query,value).exec();
     return result;
 }
 
 //批量添加用户
-baseSchema.statics.insertManyAccount=async function(data){
-    let result=await this.insertMany(data)
+baseDAO.insertManyAccount=async function(data){
+    let result=await baseModel.insertMany(data)
     return result;
 }
 
 //分页查询
 
-baseSchema.statics.myPaging=async function (keyword, pagesize, lastid) {
+baseDAO.myPaging=async function (keyword, pagesize, lastid) {
     //throw new Error("数据库查询异常:");
     //return;
     var query = {}
@@ -159,24 +164,19 @@ baseSchema.statics.myPaging=async function (keyword, pagesize, lastid) {
         ]
     }
 
-    reco = await this
+    reco = await baseModel
             .find(query)
             .sort({ _id: -1 })
             .limit(pagesize)
             .exec();
-    let count=await this.countDocuments(countQuery).exec();
+    let count=await baseModel.countDocuments(countQuery).exec();
     return {"recordset":reco,"count":count}
 }
 
 //删除teaching字段中的指定学期的记录
-baseSchema.statics.delTerm=async function(term){
-    let result=await this.updateMany({'teaching.term':term},{'$pull':{'teaching':{'term':term}}}).exec();
+baseDAO.delTerm=async function(term){
+    let result=await baseModel.updateMany({'teaching.term':term},{'$pull':{'teaching':{'term':term}}}).exec();
     return result;
 }
 
-
-
-
-var baseModel = mongoose.model('base', baseSchema)
-
-module.exports=baseModel;
+module.exports=baseDAO;

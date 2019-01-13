@@ -1,9 +1,6 @@
 const router = require('koa-router')()
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-// const Account = require('../../models/Account');
-// const tkRecord = require('../../models/tkRecord');
-// const tkLesson = require('../../models/tkLesson');
 const base = require('../../models/Fjxx');
 const crypto = require('crypto')
 const fs = require('fs')

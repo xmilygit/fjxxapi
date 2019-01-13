@@ -13,56 +13,53 @@ var termSchema=new mongoose.Schema({
     
 },{collection:'schoolterm'});
 
-var termModel=mongoose.model('schoolterm',termSchema)
 
-function termDAO(termdao){
-    this.termdao=termdao;
-}
-//获取所有
-termDAO.FindAll=async function(sort,fields){
+
+
+termSchema.statics.FindAll=async function(sort,fields){
     sort=sort||'-_id';
     fields=fields||'term subject'
-    let list=await termModel.find({},fields).sort(sort).exec()
+    let list=await this.find({},fields).sort(sort).exec()
     //let list=await termModel.find({}).sort(sort).exec()
     return list;
 }
 
-termDAO.FindById=async function(id,fields){
+termSchema.statics.FindById=async function(id,fields){
     if(fields)
     {
-        return await termModel.findById(id,fields).exec()
+        return await this.findById(id,fields).exec()
     }
-    return await termModel.findById(id).exec()
+    return await this.findById(id).exec()
 }
 
-termDAO.FindByQuery=async function(query,fields){
+termSchema.statics.FindByQuery=async function(query,fields){
     if(fields)
     {
-        return await termModel.find(query,fields).exec()
+        return await this.find(query,fields).exec()
     }
-    return await termModel.find(query).exec()
+    return await this.find(query).exec()
 }
 
 //删除
-termDAO.DelById=async function(id){
-    let result=await termModel.deleteOne({_id:id}).exec();
+termSchema.statics.DelById=async function(id){
+    let result=await this.deleteOne({_id:id}).exec();
     return result;
 }
 
 //新增
-termDAO.Save=async function(doc){
+termSchema.statics.Save=async function(doc){
     let one=new termModel(doc);
     let temp=await one.save();
     return temp;
 }
 
 //更新
-termDAO.Edit=async function(doc){
-    let result=await termModel.updateOne({_id:doc.id},doc).exec();
+termSchema.statics.Edit=async function(doc){
+    let result=await this.updateOne({_id:doc.id},doc).exec();
     return result;
 }
 //分页获取记录
-termDAO.myPaging=async function(keyword,pagesize,currentpage,sort){
+termSchema.statics.myPaging=async function(keyword,pagesize,currentpage,sort){
     sort=sort||'-_id';
     let query={}
     if(keyword)
@@ -70,8 +67,10 @@ termDAO.myPaging=async function(keyword,pagesize,currentpage,sort){
     pagesize=pagesize||5;
     currentpage=currentpage||1;
     let start=(currentpage-1)*pagesize;
-    let list=await termModel.find(query).skip(start).limit(pagesize).sort(sort).exec();
-    let countnum=await termModel.countDocuments(query).exec();
+    let list=await this.find(query).skip(start).limit(pagesize).sort(sort).exec();
+    let countnum=await this.countDocuments(query).exec();
     return {"recordset":list,"count":countnum}
 }
-module.exports=termDAO;
+var termModel=mongoose.model('schoolterm',termSchema)
+
+module.exports=termModel;
