@@ -9,6 +9,7 @@ router.prefix('/sys/mark')
 //添加学期记录
 router.post('/termAdd/', async (ctx, next) => {
     let termdata=ctx.request.body.term
+    termdata.subject=termdata.subject.split('\n');
     try{
         let result=await term.Save(termdata) 
         ctx.body={"error":false,'result':result}
@@ -37,6 +38,17 @@ router.get('/delterm/',async(ctx,next)=>{
         ctx.body={'error':false,'result':result}
     }catch(err){
         ctx.body={'error':true,'message':'删除学期记录时出错:'+err.message}
+    }
+})
+//更新学期记录
+router.post('/termEdit/',async(ctx,next)=>{
+    let reqterm=ctx.request.body.term
+    reqterm.subject=reqterm.subject.split('\n');
+    try{        
+        let result=await term.Edit(reqterm)
+        ctx.body={'error':false,'result':result}
+    }catch(err){
+        ctx.body={'error':true,'message':'更新学期数据时出错:'+err.message}
     }
 })
 module.exports = router
