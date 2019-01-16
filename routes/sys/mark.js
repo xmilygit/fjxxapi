@@ -51,4 +51,26 @@ router.post('/termEdit/',async(ctx,next)=>{
         ctx.body={'error':true,'message':'更新学期数据时出错:'+err.message}
     }
 })
+
+//获取指定学科下的任课老师
+router.get('/getTeacherBySubject/',async(ctx,next)=>{
+    let reqsubject=ctx.query.subject;
+    let reqterm=ctx.query.term;
+    try{
+        let result=await base.getBySubject(reqsubject,reqterm);
+        ctx.body={'error':false,'result':result};
+    }catch(err){
+        ctx.body={'error':true,'message':'获取任教学科教师时出错:'+err.message}
+    }
+})
+
+//获取所有教师列表
+router.get('/getAllTeacher/',async(ctx,next)=>{
+    try{
+        let result=await base.myFindByQuery({'baseinfo':{$exists:false}},"_id username")
+        ctx.body={'error':false,'result':result};
+    }catch(err){
+        ctx.body={'error':true,'message':'获取所有教师用户列表出错:'+err.message}
+    }
+})
 module.exports = router

@@ -174,6 +174,12 @@ baseSchema.statics.delTerm=async function(term){
     return result;
 }
 
+//获取所教学科中指定subject的用户
+baseSchema.statics.getBySubject=async function(subject,term){
+    let result=await this.myFindByQuery({'teaching.subject':subject,'teaching.term':term},{'username':1})
+    return result;
+}
+
 
 
 
