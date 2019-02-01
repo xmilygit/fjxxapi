@@ -71,6 +71,8 @@ termSchema.statics.myPaging=async function(keyword,pagesize,currentpage,sort){
     let countnum=await this.countDocuments(query).exec();
     return {"recordset":list,"count":countnum}
 }
+
+
 var termModel=mongoose.model('schoolterm',termSchema)
 
 module.exports=termModel;

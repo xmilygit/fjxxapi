@@ -41,9 +41,9 @@ router.post('/login', async (ctx, next) => {
 })
 
 router.post('/search', async (ctx, next) => {
-    var keyword = ctx.request.body.keyword;
-    var pagesize = ctx.request.body.pagesize;
-    var lastid = ctx.request.body.lastid;
+    var keyword = ctx.request.body.data.keyword;
+    var pagesize = ctx.request.body.data.pagesize;
+    var lastid = ctx.request.body.data.lastid;
     try {
         var accts = await base.myPaging(keyword, pagesize, lastid);
         ctx.body = { "error": false, "result": accts };

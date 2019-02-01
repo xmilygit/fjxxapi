@@ -30,7 +30,8 @@ var baseSchema = new mongoose.Schema({
         subject:{
             type:[String],
             required:[true,"学科信息必须填写"]
-        }
+        },
+        _id:false
     }],
     tkRecords: [{
         _id:{
@@ -180,6 +181,85 @@ baseSchema.statics.getBySubject=async function(subject,term){
     return result;
 }
 
+//添加新的学期后，给所有教师用户添加相关的teaching字段信息
+baseSchema.statics.appendTeachingTerm=async function(term){
+    let query = {
+        'baseinfo': { $exists: 0 }
+    };
+    let update = {
+        $addToSet:
+        {
+            'teaching':
+                { 'term': term, 'subject': [] }
+        }
+    };
+    let options={multi:true};
+    let result=await this.update(query,update,options).exec();
+}
+
+//重置并初始化指定学期下的所有任教数据
+baseSchema.statics.resetAllTeaching=async function(term){
+    // let query = {
+    //     $and: [
+    //         { 'teaching': { $exists: 0 } },
+    //         { 'baseinfo': { $exists: 0 } }
+    //     ]
+    // };
+    // let update = {
+    //     $addToSet:
+    //     {
+    //         'teaching':
+    //             { 'term': term, 'subject': [] }
+    //     }
+    // };
+    // let options={multi:true};
+    // let result=await this.update(query,update,options).exec();
+
+    let query={'baseinfo':{$exists:0}};
+    let update = {$set:{'teaching.$[item].subject': []}}
+    let options={arrayFilters:[{'item.term':term}],multi:true}
+    let result=await this.update(query,update,options).exec();
+    return result;
+}
+
+//更改学期名称时同时更改教师用户相关学期名称
+baseSchema.statics.updateAllTerm=async function(oldterm,newterm,diffsubject){
+    // if(oldterm==newterm) return
+    let update={};
+    if(oldterm!=newterm){
+        update['$set']={'teaching.$[t].term':newterm}
+    }
+    if(diffsubject.length>0){
+        update['$pull']={'teaching.$[t].subject':{$in:diffsubject}}
+    }
+    let query = {
+        'baseinfo': { $exists: 0 }
+    };
+    // let update = {
+    //     '$set':updatefield
+    //         //{ 'teaching.$[t].term': newterm }
+    // };
+    let options = {
+        arrayFilters: [{ 't.term': oldterm }],
+        multi: true
+    }
+    let result=await this.update(query,update,options).exec();
+    return result;
+}
+
+//给教师设置(添加)指定学期的任教学科
+baseSchema.statics.setTeachingSubject=async function(term,subject,teachers){
+    let query = { 'baseinfo': { $exists: 0 } }
+    let update = { $pull: { 'teaching.$[item].subject': subject } }
+    let options={arrayFilters:[{'item.term':term}],multi:true}
+    //重置term学期下的subject课程任教数据
+    let result=await this.update(query,update,options).exec();
+    //设置新的任教信息
+    query={'username':{$in:teachers}}
+    update={$push:{'teaching.$[item].subject':subject}}
+    result=await this.update(query,update,options).exec();
+    return result
+}
 
 
 
