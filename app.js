@@ -6,6 +6,7 @@ const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
 const cors=require('koa2-cors')
+const session=require('koa-session2')
 
 const db=require('./cfg/dbconfig');
 const index = require('./routes/index')
@@ -15,6 +16,7 @@ const mark=require('./routes/sys/mark');
 const typekey=require('./routes/typekey/index');
 const sitenav=require('./routes/sitenav/index')
 const test=require('./routes/test');
+const wechat=require('./routes/wechat/index')
 
 
 // error handler
@@ -24,6 +26,8 @@ onerror(app)
 app.use(bodyparser({
   enableTypes:['json', 'form', 'text']
 }))
+//session
+app.use(session())
 app.use(json())
 app.use(logger())
 app.use(require('koa-static')(__dirname + '/public'))
@@ -57,6 +61,7 @@ app.use(sys.routes(),sys.allowedMethods())
 app.use(typekey.routes(),typekey.allowedMethods())
 app.use(sitenav.routes(),sitenav.allowedMethods())
 app.use(mark.routes(),mark.allowedMethods())
+app.use(wechat.routes(),wechat.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)
