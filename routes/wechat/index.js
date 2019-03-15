@@ -2,11 +2,12 @@ const router = require('koa-router')()
 const wechatapi = require('co-wechat-api')
 const wechatconfig = require('../../cfg/wechatconfig.js')
 const axios = require('axios')
-const jwt=require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 const fs = require('fs')
 
 const base = require('../../models/Fjxx');
-const curl="http://mxthink2.cross.echosite.cn/"
+//const curl="/wx/";
+const curl = "http://mxthink2.cross.echosite.cn/"
 
 router.prefix('/wechat')
 
@@ -29,14 +30,13 @@ var api = new wechatapi(
     wechatconfig.wechatauth.appsecret
 );
 
+
 router.get('/binder/', async (ctx, next) => {
     let code = ctx.query.code;
-    let openid=null;
+    let openid = null;
     //如果缓存中有openid
-    if (ctx.session.openid) {
-        openid=ctx.session.openid
-        // console.log('session has openid')
-        // ctx.body = "sesson has openid"
+    if (ctx.session.info) {
+        openid = JSON.parse(ctx.session.info).openid
         //如果session里有openid那么跳过
     } else {
         //否则检查code是否有
@@ -51,7 +51,7 @@ router.get('/binder/', async (ctx, next) => {
             try {
                 let result = await axios.get(getopenidurl)
                 openid = result.data.openid
-                if(result.data.errcode){
+                if (result.data.errcode) {
                     console.log(result.data)
                 }
                 //ctx.session.openid = openid
@@ -63,24 +63,24 @@ router.get('/binder/', async (ctx, next) => {
     }
     //对比数据库，有则转到指定页面，无则转入至登录界面
     try {
-        //let finduser = await base.myFindByQuery({ 'wxopenid': openid})
-        //if (finduser.length==1) {
-            ctx.cookies.set('openid','adasdfsdfsffd')
-            let c=ctx.cookies.get('openid')
-            ctx.redirect(curl)
-        //} else {
-        //    ctx.body = "redirect绑定用户界面"
-        //}
+        let info = { openid: openid, isbinder: false }
+
+
+        let finduser = await base.myFindByQuery({ 'wxopenid': openid })
+        if (finduser.length == 1) {
+            info.isbinder = true;
+        }
+        ctx.session.info = JSON.stringify(info)
+        ctx.redirect(curl)
     } catch (err) {
         console.log(err)
     }
 })
 
-router.get('/cgetopenid',async(ctx,next)=>{
-    console.log(ctx.cookies.get('openid'))
-    ctx.body={"openid":ctx.cookies.get('openid')}
-    
-
+router.get('/cgetopenid', async (ctx, next) => {
+    console.log(ctx.session.info)
+    ctx.body = { "info": ctx.session.info }
+    return;
 })
 
 // router.get('/', async (ctx, next) => {

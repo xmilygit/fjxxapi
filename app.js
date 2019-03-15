@@ -36,7 +36,18 @@ app.use(views(__dirname + '/views', {
   extension: 'nunjucks'
 }))
 
-app.use(cors());
+//app.use(cors());
+app.use(cors({
+  origin: "http://mxthink2.cross.echosite.cn",
+      //return 'http://localhost:8080'; / 这样就能只允许 http://localhost:8080 这个域名的请求了
+  exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
+  maxAge: 5,
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'DELETE','OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+}))
+
+
 // logger
 app.use(async (ctx, next) => {
   const start = new Date()
