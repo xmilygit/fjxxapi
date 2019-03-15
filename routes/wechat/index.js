@@ -68,7 +68,8 @@ router.get('/binder/', async (ctx, next) => {
 
         let finduser = await base.myFindByQuery({ 'wxopenid': openid })
         if (finduser.length == 1) {
-            info.isbinder = true;
+            //info.isbinder = true;
+            info.isbinder = false;
         }
         ctx.session.info = JSON.stringify(info)
         ctx.redirect(curl)
@@ -76,11 +77,17 @@ router.get('/binder/', async (ctx, next) => {
         console.log(err)
     }
 })
-
-router.get('/cgetopenid', async (ctx, next) => {
+//客户端从服务器获取微信公众号的openid及相关信息
+router.get('/cgetopenid/', async (ctx, next) => {
     console.log(ctx.session.info)
     ctx.body = { "info": ctx.session.info }
     return;
+})
+
+router.post('/binder/',async(ctx,next)=>{
+    let stuinfo=ctx.request.body.stuinfo
+    console.log(stuinfo)
+    ctx.body=""
 })
 
 // router.get('/', async (ctx, next) => {
