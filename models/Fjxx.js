@@ -123,6 +123,12 @@ baseSchema.statics.myUpdateField=async function(query,value){
     return result;
 }
 
+//根据条件查找一条记录
+baseSchema.statics.myFindOne=async function(query){
+    let result=await this.findOne(query).exec();
+    return result;
+}
+
 //批量添加用户
 baseSchema.statics.insertManyAccount=async function(data){
     let result=await this.insertMany(data)

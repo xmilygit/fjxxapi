@@ -4,6 +4,7 @@ const wechatconfig = require('../../cfg/wechatconfig.js')
 const axios = require('axios')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
+const crypto = require('crypto')
 
 const base = require('../../models/Fjxx');
 //const curl="/wx/";
@@ -84,11 +85,31 @@ router.get('/cgetopenid/', async (ctx, next) => {
     return;
 })
 
-router.post('/binder/',async(ctx,next)=>{
-    let stuinfo=ctx.request.body.stuinfo
-    console.log(stuinfo)
-    ctx.body=""
+router.post('/binder/', async (ctx, next) => {
+    let stuinfo = ctx.request.body.stuinfo
+    if (!stuinfo)
+        return;
+    try {
+        let user = await base.myFindOne({ 'username': stuinfo.stuname, 'password': Enpassword(stuinfo.stupassword)})
+        if (user) {
+            //存openid
+            ctx.body = 'ok'
+        } else {
+            //返回无该用户的提示
+            ctx.body = { 'error': true, 'message': '该学生不存在，请检查姓名及密码输入是否正确！' }
+        }
+    } catch (err) {
+        throw new Error('执行绑定时出错：' + err)
+    }
 })
+
+//密码HASH
+function Enpassword(password) {
+    var sha1 = crypto.createHash('sha1');
+    sha1.update(password);
+    return sha1.digest('hex')
+}
+
 
 // router.get('/', async (ctx, next) => {
 //     //var result=await api.api.sendText('openid', 'Hello world', callback);

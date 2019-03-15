@@ -38,7 +38,7 @@ app.use(views(__dirname + '/views', {
 
 //app.use(cors());
 app.use(cors({
-  origin: "http://mxthink2.cross.echosite.cn",
+  origin: "*",//"http://mxthink2.cross.echosite.cn",
       //return 'http://localhost:8080'; / 这样就能只允许 http://localhost:8080 这个域名的请求了
   exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
   maxAge: 5,
