@@ -118,11 +118,16 @@ baseSchema.statics.myUpdate=async function(query,value){
     let result=await this.update(query,value).exec();
     return result;
 }
+
 baseSchema.statics.myUpdateField=async function(query,value){
     let result=await this.update(query,value).exec();
     return result;
 }
-
+//更新一条记录
+baseSchema.statics.myUpdateOne=async function(query,value){
+    let result=await this.updateOne(query,value).exec();
+    return result;
+}
 //根据条件查找一条记录
 baseSchema.statics.myFindOne=async function(query){
     let result=await this.findOne(query).exec();

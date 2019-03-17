@@ -16,7 +16,16 @@ router.get('/', async (ctx, next) => {
     var accts = await acct.myFindAll();
     ctx.body = accts;
 })
-
+//解除用户的微信绑定
+router.post('/unbinderwechat',async(ctx,next)=>{
+    let openid=ctx.request.body.openid;
+    try{
+        var res=await base.myUpdateOne({"wxopenid":openid},{$unset:{'wxopenid':''}})
+        ctx.body={error:false,result:res}
+    }catch(err){
+        throw new Error('解除微信绑定失败:'+err)
+    }
+})
 //用户登录入口
 router.post('/login', async (ctx, next) => {
     let un = ctx.request.body.username;
