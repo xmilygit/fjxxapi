@@ -9,8 +9,8 @@ const cors=require('koa2-cors')
 const session=require('koa-session2')
 
 const db=require('./cfg/dbconfig');
-const index = require('./routes/index')
-const users = require('./routes/users')
+//const index = require('./routes/index')
+//const users = require('./routes/users')
 const sys=require('./routes/sys/index');
 const mark=require('./routes/sys/mark');
 const typekey=require('./routes/typekey/index');
@@ -67,8 +67,8 @@ app.use(async (ctx, next) => {
 // }))
 
 // routes
-app.use(index.routes(), index.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
+// app.use(index.routes(), index.allowedMethods())
+// app.use(users.routes(), users.allowedMethods())
 app.use(sys.routes(),sys.allowedMethods())
 app.use(typekey.routes(),typekey.allowedMethods())
 app.use(sitenav.routes(),sitenav.allowedMethods())
