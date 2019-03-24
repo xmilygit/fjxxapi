@@ -1,5 +1,5 @@
 var sitecfg = {
-    clientURL:"http://mxthink.cross.echosite.cn/wechat/binder",
+    clientURL:"http://mxthink.cross.echosite.cn/testwechat",
     serverURL:"http://mxthink.cross.echosite.cn",
     tokenKey:"mxthink"
 };

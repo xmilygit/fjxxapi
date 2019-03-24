@@ -75,6 +75,7 @@ app.use(sitenav.routes(),sitenav.allowedMethods())
 app.use(mark.routes(),mark.allowedMethods())
 app.use(wechat.routes(),wechat.allowedMethods())
 app.use(homeinfo.routes(),homeinfo.allowedMethods())
+app.use(test.routes(),test.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)

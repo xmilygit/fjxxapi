@@ -9,6 +9,7 @@ const crypto = require('crypto')
 // const fs=require('fs')
 const path = require('path')
 const xls=require('xls-to-json')
+const key=require('../cfg/key.js')
 // const multer=require('koa-multer');
 router.prefix('/test')
 
@@ -21,6 +22,26 @@ router.get('/xls2json', async (ctx, next) => {
     .catch((err)=>{
         ctx.body=err;
     })
+})
+
+router.get('/cfgtostring',async(ctx,next)=>{
+    let str="http://mxthink2.cross.echosite.cn"
+    let psw="simple"
+    
+    //加密
+    let cipher=crypto.createCipher('aes-192-ccm',psw);
+    let crypted=cipher.update(str,'utf-8','hex')
+    crypted+=cipher.final('hex')
+
+    //解密
+    let decipher=crypto.createDecipher('aes-192-ccm',psw);
+    let decrypted=decipher.update(crypted,'hex','utf-8');
+    decrypted+=decipher.final('utf-8');
+
+    ctx.body="加密:"+crypted+"<br>解密:"+decrypted
+
+//没成功
+    //ctx.body=crypted
 })
 
 function xls2json(resolve,reject){
@@ -40,6 +61,7 @@ function xls2json(resolve,reject){
         }
     })
 }
+
 
 
 module.exports = router

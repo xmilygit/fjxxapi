@@ -29,7 +29,7 @@ var mymenu = {
         {
             "name": "测试",
             "type": "view",
-            "url": 'http://mxthink.cross.echosite.cn/wechat/binder/'
+            "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/testwechat/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
         },
         {
             "name": '测试2',
@@ -39,33 +39,55 @@ var mymenu = {
     ]
 };
 
-// router.get('/delmenu/', async (ctx, next) => {
-//     try {
-//         let delmenu = await api.removeMenu();
-//         console.log("菜单删除成功")
-//         ctx.body = "菜单删除成功"
-//     } catch (err) {
-//         console.log(err)
-//         ctx.body = "菜单删除失败"
-//     }
-// }
-// )
+router.get('/delmenu/', async (ctx, next) => {
+    try {
+        let delmenu = await api.removeMenu();
+        console.log("菜单删除成功")
+        ctx.body = "菜单删除成功"
+    } catch (err) {
+        console.log(err)
+        ctx.body = "菜单删除失败"
+    }
+}
+)
 
-// router.get('/creatmenu/', async (ctx, net) => {
-//     try {
-//         let createmenu = api.createMenu(mymenu)
-//         console.log("菜单创建成功");
-//         ctx.body = "菜单创建成功"
-//     } catch (err) {
-//         console.log(err)
-//         ctx.body = "菜单创建失败"
-//     }
+router.get('/creatmenu/', async (ctx, net) => {
+    try {
+        let createmenu = api.createMenu(mymenu)
+        console.log("菜单创建成功");
+        ctx.body = "菜单创建成功"
+    } catch (err) {
+        console.log(err)
+        ctx.body = "菜单创建失败"
+    }
 
-// })
+})
 
 var errhtml = '<title>抱歉，出错了</title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0"><link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css">';
 errhtml += '<div class="weui_msg"><div class="weui_icon_area"><i class="weui_icon_info weui_icon_msg"></i></div><div class="weui_text_area"><h4 class="weui_msg_title">请在微信客户端打开链接</h4></div></div>';
 
+
+//拦截所有请求，如果有token则将用户信息注入到请求中
+router.use(async (ctx, next) => {
+    console.log('拦截的访问:' + ctx.request.href)
+    //let token = ctx.header.authorization;
+    //var token = posttoken || ctx.query.token;
+    if (ctx.header.authorization) {
+        try {
+            let token = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+            ctx.request.token = token;
+        } catch (err) {
+            ctx.body = { vali: false, message: "验证token时出错：[" + err + "]程序终止!" };
+            return;
+        }
+    }
+    await next();
+})
+
+router.post('/valitoken/', async (ctx, next) => {
+    ctx.body = { vali: true, isbinder: ctx.request.token.isbinder }
+    return;
+})
 
 router.get('/binder/', async (ctx, next) => {
     // if (!ctx.query.code && !ctx.session.wxuserinfo) {
@@ -73,8 +95,16 @@ router.get('/binder/', async (ctx, next) => {
     //     return;
     // }
     //使用token认证，以上代码改为以下代码：
-    if (!ctx.query.code)
+    if (!ctx.query.code) {
         ctx.body = errhtml;
+        return;
+    }
+
+    if (ctx.request.token) {
+        ctx.redirect(sitecfg.clientURL + "/?token=" + ctx.request.authorization)
+        return;
+    }
+    //let code=ctx.query.code;
 
     let wxuserinfo = {
         code: ctx.query.code,
@@ -84,34 +114,48 @@ router.get('/binder/', async (ctx, next) => {
     }
 
     let getopenidurl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + wechatconfig.wechatauth.appid + "&secret=" + wechatconfig.wechatauth.appsecret + "&code=" + wxuserinfo.code + "&grant_type=authorization_code"
+
+
     try {
         let result = await axios.get(getopenidurl)
-        console.log(result.data.openid)
-        wxuserinfo.openid = result.data.openid;
-        //ctx.redirect(sitecfg.clientURL + "/?openid=" + result.data.openid)
+        if (result.data.errcode) {
+            ctx.body = result.data.errmsg
+            return;
+        } else {
+            wxuserinfo.openid = result.data.openid;
+        }
     } catch (err) {
         //获取用户授权出错了，跳转到出错页面
-        console.log(err)
+        console.log('获取用户授权出错:' + err)
         wxuserinfo.error = true;
         ctx.body = err;
+        return;
     }
 
+    //wxuserinfo.openid="sadfsadfadf"
     try {
         if (!wxuserinfo.isbinder) {
             let finduser = await base.myFindByQuery({ 'wxopenid': wxuserinfo.openid })
-            if (finduser.length == 1) {
-                wxuserinfo.isbinder = true;
-            }
+            // if (finduser.length == 1) {
+            //     wxuserinfo.isbinder = true;
+            //     let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
+            //     ctx.redirect(sitecfg.clientURL + "/?token=" + token + "&isbinder=" + wxuserinfo.isbinder)
+            //     return;
+            // } else {
+            //     ctx.redirect(sitecfg.clientURL+'/?openid='+wxuserinfo.openid)
+            //     return;
+            // }
+            if (finduser.length == 1) wxuserinfo.isbinder = true
+            let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
+            ctx.redirect(sitecfg.clientURL + "/?token=" + token)
         }
-        let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
-        ctx.redirect(sitecfg.clientURL + "/?token=" + token + "&isbinder=" + wxuserinfo.isbinder)
     } catch (err) {
         //根据openid 查询数据库时出错，这里后期要放置出错界面
         wxuserinfo.error = true;
         console.log(err)
         ctx.body = err
+        return
     }
-    return
 })
 
 //微信JSSDK调用配置
@@ -126,20 +170,24 @@ router.post('/jsconfig/', async (ctx, ncext) => {
 })
 //绑定微信用户帐号
 router.post('/binder/', async (ctx, next) => {
+    // if (!ctx.request.token) {
+    //     ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
+    //     return;
+    // }
     let stuinfo = ctx.request.body.stuinfo
     let wxuserinfo = {}
-    if (!ctx.header.authorization) {
+    // if (!ctx.header.authorization) {
+    if (!ctx.request.token)
         throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
-        // return;
-    }
-    try {
-        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    } catch (err) {
-        throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
-        // return;
-    }
+    wxuserinfo = ctx.request.token;
+    // try {
+    //     // wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    //     wxuserinfo = ctx.request.token;
+    // } catch (err) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    //     // ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
+    //     // return;
+    // }
     if (!stuinfo)
         return;
     try {
@@ -149,6 +197,7 @@ router.post('/binder/', async (ctx, next) => {
         })
         if (user) {
             if (user.wxopenid) {
+                //需要改进为申请重新绑定
                 ctx.body = { 'error': true, 'message': '该微信用户已经绑定！无需重复绑定！' }
                 return;
             }
