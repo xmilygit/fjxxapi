@@ -37,7 +37,7 @@ Room.find({}, null, {sort: {date: -1}}, function(err, docs) { ... });
 tkLessonDAO.myFindAll=async function(sort,fields){
     sort=sort||'-_id';
     fields=fields||'lessonname'
-    let list=await tkLessonModel.find({},fields).sort(sort).exec()
+    let list=await tkLessonModel.find({"show" : { $ne : false }},fields).sort(sort).exec()
     return list;
 }
 
