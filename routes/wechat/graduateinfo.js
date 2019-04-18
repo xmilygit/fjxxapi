@@ -6,9 +6,9 @@ const sitecfg = require('../../cfg/siteconfig.js')
 
 router.prefix('/graduate')
 
-router.get('/getbaseinfo', async (ctx, next) => {
+router.get('/getbaseinfo/', async (ctx, next) => {
     try {
-        let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': '' })
+        let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': '450303200706262017' })
         if (graduatebaseinfo)
             ctx.body = { 'error': false, 'result': graduatebaseinfo }
         else

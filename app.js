@@ -18,6 +18,7 @@ const sitenav=require('./routes/sitenav/index')
 const test=require('./routes/test');
 const wechat=require('./routes/wechat/index')
 const homeinfo=require('./routes/wechat/homeinfo')
+const graduateinfo=require('./routes/wechat/graduateinfo')
 
 
 // error handler
@@ -75,7 +76,9 @@ app.use(sitenav.routes(),sitenav.allowedMethods())
 app.use(mark.routes(),mark.allowedMethods())
 app.use(wechat.routes(),wechat.allowedMethods())
 app.use(homeinfo.routes(),homeinfo.allowedMethods())
+app.use(graduateinfo.routes(),graduateinfo.allowedMethods())
 app.use(test.routes(),test.allowedMethods())
+
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)
