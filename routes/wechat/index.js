@@ -148,6 +148,7 @@ router.get('/binder/', async (ctx, next) => {
             if (finduser.length == 1) wxuserinfo.isbinder = true
             let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
             ctx.redirect(sitecfg.clientURL + "/?token=" + token)
+            // ctx.redirect(sitecfg.serverURL + "/?token=" + token)
         }
     } catch (err) {
         //根据openid 查询数据库时出错，这里后期要放置出错界面
