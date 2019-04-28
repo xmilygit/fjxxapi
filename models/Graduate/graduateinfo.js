@@ -25,6 +25,7 @@ var graduateinfoSchema = new mongoose.Schema({
     "hashouse": Boolean,
     "hometype": String,
     "sigle": Boolean,
+    "stulocal":Boolean,
 }, { collection: 'graduateinfo2' })
 
 

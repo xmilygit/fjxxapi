@@ -4,27 +4,36 @@ const axios = require('axios')
 const jwt = require('jsonwebtoken')
 const graduateinfo = require('../../models/graduate/graduateinfo')
 const sitecfg = require('../../cfg/siteconfig.js')
+const wechatapi = require('co-wechat-api')
+const wechatconfig = require('../../cfg/wechatconfig.js')
 
 router.prefix('/graduate')
 
+
+var api = new wechatapi(
+    wechatconfig.wechatauth.appid,
+    wechatconfig.wechatauth.appsecret
+);
+
 router.get('/getbaseinfo/', async (ctx, next) => {
-    if (!ctx.header.authorization) {
-        throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-        // return;
-    }
-    let wxuserinfo = {}
-    try {
-        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    } catch (err) {
-        throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-        // return;
-    }
+    // if (!ctx.header.authorization) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    //     // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
+    //     // return;
+    // }
+    // let wxuserinfo = {}
+    // try {
+    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    // } catch (err) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    //     // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
+    //     // return;
+    // }
 
     try {
-        let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid })
-        let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': baseinfo.pid })
+        // let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid })
+        // let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': baseinfo.pid })
+        let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': '450205198008141012' })
         if (graduatebaseinfo)
             ctx.body = { 'error': false, 'result': graduatebaseinfo }
         else
@@ -35,6 +44,16 @@ router.get('/getbaseinfo/', async (ctx, next) => {
 })
 
 router.post('/getresult/', async (ctx, next) => {
+    // if (!ctx.header.authorization) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    // }
+    // let wxuserinfo = {}
+    // try {
+    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    // } catch (err) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    // }
+
     let stuinfodata = ctx.request.body.stuinfo;
     let stuinfo = {}
     stuinfo.result = result(stuinfodata)
@@ -60,12 +79,14 @@ router.post('/getresult/', async (ctx, next) => {
     stuinfo.hashouse = stuinfodata.hashouse;
     stuinfo.hometype = stuinfodata.hometype;
     stuinfo.sigle = stuinfodata.sigle;
+    stuinfo.stulocal=stuinfodata.stulocal;
 
     try {
         let res = await graduateinfo.myUpdateOne(
             { '身份证件号':stuinfo.身份证件号 },
             stuinfo
         )
+        let sendmessage=api.sendText(wxuserinfo.openid,stuinfo.result)
         ctx.body = { 'error': false, 'result': stuinfo.result }
     } catch (err) {
         throw new Error("保存时出错:[" + err + "]")
@@ -84,7 +105,7 @@ function result(stuinfo) {
         return "雁山区户籍，请携带户口本，居住证明咨询"
     }
 
-    //住地是以证名义下的
+    //住地是谁名义下的
     let whohouse = "";
     //住地归属别名用于程序识别
     let whohouseAlias = "";
@@ -122,7 +143,7 @@ function result(stuinfo) {
     let resultText = rs[0];
 
     //有产权房否
-    let hashouse = /监护人共有产权房|监护人1产权房|监护人2产权房|监护人1单位集资房|监护人2单位集资房/gi.test(
+    let hashouse = /监护人共有产权房|监护人1产权房|监护人2产权房|监护人1单位集资房|监护人2单位集资房|独立产权房/gi.test(
         stuinfo.hometype
     );
     // this.checkhome=hashouse?false:true;
@@ -145,8 +166,8 @@ function result(stuinfo) {
             }
             //只有学生单独四城区户籍且无房，认定为外来务工人员子女
             //alert(rs[0]+"监护人户口本;请带材料咨询")
-            resultText += "监护人户口本;居住证明咨询"
-            return;
+            resultText += "监护人户口本;咨询负责人。"
+            return resultText;
         }
 
         if (stuinfo.fregaddress != 5 && stuinfo.sregaddress != 5 && whohouseAlias !== 3) {
@@ -200,7 +221,7 @@ function result(stuinfo) {
         return resultText
     } else {
         //非四城区户籍学生
-        //随具有四城区户籍监护人实际居住（有房产的)
+        //随具有四城区户籍监护人实际居住（有房产的)        
         if (
             (stuinfo.fregaddress == 4 && hashouse)
             ||
@@ -214,8 +235,13 @@ function result(stuinfo) {
             ) {
                 resultText += rs[7] + "或者" + rs[8]
             }
+
+            if (stuinfo.fregaddress != 5 && stuinfo.sregaddress != 5 && whohouseAlias !== 3) {
+                //监护人与学生均不在同一户籍，需要证明与学生的关系
+                resultText += rs[7]
+            }
         } else {
-            resultText = "学生户口本；以外来务工人员子女就读，由初中审核材料"
+            resultText = "学生及监护人户口本；以外来务工人员子女就读，由初中审核材料"
         }
         //alert(resultText)
         return resultText
