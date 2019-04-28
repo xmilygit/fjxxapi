@@ -108,7 +108,7 @@ function result(stuinfo) {
 
     let rs = [
         stuinfo.stuname + "户口本;",
-        whohouse + "名下房产证;",
+        whohouse + "名下房产证，尚未办理房产证的，提供购房合同、购房发票及完税证明;",
         whohouse + "与房东签订的租房合同、房东的房产证（或复印件）;",
         "祖父母（外祖父母房产证）;",
         whohouse + "名下集资房购房协议及房款发票;",
