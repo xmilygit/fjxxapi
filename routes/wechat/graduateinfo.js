@@ -16,24 +16,24 @@ var api = new wechatapi(
 );
 
 router.get('/getbaseinfo/', async (ctx, next) => {
-    // if (!ctx.header.authorization) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    //     // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-    //     // return;
-    // }
-    // let wxuserinfo = {}
-    // try {
-    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    // } catch (err) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    //     // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-    //     // return;
-    // }
+    if (!ctx.header.authorization) {
+        throw new Error('关键数据链接失效或者是非法的！')
+        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
+        // return;
+    }
+    let wxuserinfo = {}
+    try {
+        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    } catch (err) {
+        throw new Error('关键数据链接失效或者是非法的！')
+        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
+        // return;
+    }
 
     try {
-        // let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid })
-        // let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': baseinfo.pid })
-        let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': '450205198008141012' })
+        let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid })
+        let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': baseinfo.pid })
+        // let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': '450205198008141012' })
         if (graduatebaseinfo)
             ctx.body = { 'error': false, 'result': graduatebaseinfo }
         else
@@ -44,15 +44,15 @@ router.get('/getbaseinfo/', async (ctx, next) => {
 })
 
 router.post('/getresult/', async (ctx, next) => {
-    // if (!ctx.header.authorization) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    // }
-    // let wxuserinfo = {}
-    // try {
-    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    // } catch (err) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    // }
+    if (!ctx.header.authorization) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
+    let wxuserinfo = {}
+    try {
+        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    } catch (err) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
 
     let stuinfodata = ctx.request.body.stuinfo;
     let stuinfo = {}
@@ -86,7 +86,13 @@ router.post('/getresult/', async (ctx, next) => {
             { '身份证件号':stuinfo.身份证件号 },
             stuinfo
         )
-        let sendmessage=api.sendText(wxuserinfo.openid,stuinfo.result)
+        let msg="根据您所填写的信息，预计需要您提供以下材料进行小升初的审核（无特别说明，材料均需提交原件）："
+        let rs=stuinfo.result.split(";")
+        for(i=0;i<rs.length-1;i++){
+            msg+='\n\r'+(i+1)+"、"+rs[i]
+        }
+        // let sendmessage=api.sendText(wxuserinfo.openid,stuinfo.result)
+        let sendmessage=api.sendText(wxuserinfo.openid,msg)
         ctx.body = { 'error': false, 'result': stuinfo.result }
     } catch (err) {
         throw new Error("保存时出错:[" + err + "]")
@@ -166,7 +172,7 @@ function result(stuinfo) {
             }
             //只有学生单独四城区户籍且无房，认定为外来务工人员子女
             //alert(rs[0]+"监护人户口本;请带材料咨询")
-            resultText += "监护人户口本;咨询负责人。"
+            resultText += "监护人户口本;来校咨询负责人;"
             return resultText;
         }
 
@@ -227,11 +233,16 @@ function result(stuinfo) {
             ||
             (stuinfo.sregaddress == 4 && hashouse)
         ) {
+            if(stuinfo.fregaddress==4){
+                resultText+=stuinfo.fname+"户口本;"
+            }else if(stuinfo.sregaddress==4){
+                resultText+=stuinfo.sname+"户口本;"
+            }
             resultText += rs[1]
             if (
-                (stuinfo.fregaddress != 5 && whohouseAlias == 1 && stuinfo.sregaddress == 5)
+                (stuinfo.fregaddress != 5  && stuinfo.sregaddress == 5)//&& whohouseAlias == 1
                 ||
-                (stuinfo.sregaddress != 5 && whohouseAlias == 2 && stuinfo.fregaddress == 5)
+                (stuinfo.sregaddress != 5  && stuinfo.fregaddress == 5)//&& whohouseAlias == 2
             ) {
                 resultText += rs[7] + "或者" + rs[8]
             }
@@ -241,7 +252,7 @@ function result(stuinfo) {
                 resultText += rs[7]
             }
         } else {
-            resultText = "学生及监护人户口本；以外来务工人员子女就读，由初中审核材料"
+            resultText = "学生及监护人户口本；以外来务工人员子女就读，由初中审核材料;"
         }
         //alert(resultText)
         return resultText
