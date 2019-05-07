@@ -39,6 +39,46 @@ graduateinfoSchema.statics.myUpdateOne = async function (query, value) {
     return result
 }
 
+//分页查询
+
+graduateinfoSchema.statics.myPaging=async function (keyword, pagesize, lastid) {
+    //throw new Error("数据库查询异常:");
+    //return;
+    var query = {}
+    let reco = []
+    if (lastid) {
+        query = {
+            $or: [
+                { '学生姓名': { $regex: keyword } },
+                { '身份证件号': { $regex: keyword } }
+            ],
+            _id: { $lt: lastid }
+        }
+    } else {
+        query = {
+            $or: [
+                { '学生姓名': { $regex: keyword } },
+                { '身份证件号': { $regex: keyword } }
+            ]
+        }
+    }
+
+    let countQuery={
+        $or:[
+            {'学生姓名':{$regex:keyword}},
+            {'身份证件号':{$regex:keyword}}
+        ]
+    }
+
+    reco = await this
+            .find(query)
+            .sort({ _id: -1 })
+            .limit(pagesize)
+            .exec();
+    let count=await this.countDocuments(countQuery).exec();
+    return {"recordset":reco,"count":count}
+}
+
 
 var graduateinfoModel = mongoose.model('graduateinfo', graduateinfoSchema)
 module.exports = graduateinfoModel;
