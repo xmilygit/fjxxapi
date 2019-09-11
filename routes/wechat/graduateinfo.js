@@ -86,7 +86,7 @@ router.post('/getresult/', async (ctx, next) => {
             { '身份证件号':stuinfo.身份证件号 },
             stuinfo
         )
-        let msg="根据您所填写的信息，预计需要您提供以下材料进行小升初的审核（无特别说明，材料均需提交原件）："
+        let msg="根据您所填写的信息，需要您提供以下材料进行小升初的材料审核（无特别说明，材料均需提交原件）："
         let rs=stuinfo.result.split(";")
         for(i=0;i<rs.length-1;i++){
             msg+='\n\r'+(i+1)+"、"+rs[i]
@@ -162,12 +162,15 @@ function result(stuinfo) {
             //alert(rs[0]+rs[1])
             return resultText;
         }
-
+        if(stuinfo.fregaddress!=5&&stuinfo.sregaddress!=5&&whohouseAlias==3){
+            resultText+="监护人与学生的关系证明(出生证);"
+        }
         if (stuinfo.fregaddress != 5 && stuinfo.fregaddress != 4 && stuinfo.sregaddress != 5 && stuinfo.sregaddress != 4 && !hashouse) {
+            resultText+=rs[1]
             if (whohouseAlias == 3) {
                 //只有学生单独四城区户籍且无房，用老人家房子，可认定学生
                 //alert(rs[0]+rs[1]+rs[9])
-                resultText += rs[1] + rs[9];
+                resultText +=whohouse+"与学生的关系证明（如与学生在同一户籍，则提供户口本）;"+ rs[9];
                 return resultText
             }
             //只有学生单独四城区户籍且无房，认定为外来务工人员子女

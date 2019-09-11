@@ -13,6 +13,7 @@ const db=require('./cfg/dbconfig');
 //const users = require('./routes/users')
 const sys=require('./routes/sys/index');
 const mark=require('./routes/sys/mark');
+const graduate=require('./routes/sys/graduate');
 const typekey=require('./routes/typekey/index');
 const sitenav=require('./routes/sitenav/index')
 const test=require('./routes/test');
@@ -74,6 +75,7 @@ app.use(sys.routes(),sys.allowedMethods())
 app.use(typekey.routes(),typekey.allowedMethods())
 app.use(sitenav.routes(),sitenav.allowedMethods())
 app.use(mark.routes(),mark.allowedMethods())
+app.use(graduate.routes(),mark.allowedMethods())
 app.use(wechat.routes(),wechat.allowedMethods())
 app.use(homeinfo.routes(),homeinfo.allowedMethods())
 app.use(graduateinfo.routes(),graduateinfo.allowedMethods())
