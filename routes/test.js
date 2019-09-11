@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 // const tkRecord = require('../../models/tkRecord');
 // const tkLesson = require('../../models/tkLesson');
 const base = require('../models/Fjxx');
+const nstest=require('../models/NewStudent/newstudent')
 const crypto = require('crypto')
 // const fs=require('fs')
 const path = require('path')
@@ -13,6 +14,17 @@ const key=require('../cfg/key.js')
 // const multer=require('koa-multer');
 router.prefix('/test')
 
+router.get('/2019ns',async(ctx,next)=>{
+    let all=await nstest.findall()
+    
+    all.forEach(async doc => {
+        await nstest.updateone({'身份证':doc.身份证},{$set:{password:doc.身份证.substr(12,6),wxopenid:null}})
+    });
+    // let rs=await nstest.update({'身份证':'450303201210150526'},{$set:{password:'aabbcc',wxopenid:null}})
+
+    //console.log(rs)
+    ctx.body=''
+})
 
 router.get('/xls2json', async (ctx, next) => {
     let exec=new Promise(xls2json);
