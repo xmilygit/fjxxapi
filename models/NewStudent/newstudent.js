@@ -9,6 +9,7 @@ var mongoose=require('mongoose')
 // },{collection:'2019NewStudent'})
 var newstudentSchema=new mongoose.Schema({
     _id:mongoose.Schema.Types.ObjectId,
+    "姓名":String,
     "性别": String,
     // "出生日期": String,
     "身份证件号": String,

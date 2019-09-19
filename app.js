@@ -20,6 +20,7 @@ const test=require('./routes/test');
 const wechat=require('./routes/wechat/index')
 const homeinfo=require('./routes/wechat/homeinfo')
 const graduateinfo=require('./routes/wechat/graduateinfo')
+const newstudentreg=require('./routes/wechat/newstudentreg')
 
 
 // error handler
@@ -79,7 +80,9 @@ app.use(graduate.routes(),mark.allowedMethods())
 app.use(wechat.routes(),wechat.allowedMethods())
 app.use(homeinfo.routes(),homeinfo.allowedMethods())
 app.use(graduateinfo.routes(),graduateinfo.allowedMethods())
+app.use(newstudentreg.routes(),newstudentreg.allowedMethods())
 app.use(test.routes(),test.allowedMethods())
+
 
 // error-handling
 app.on('error', (err, ctx) => {

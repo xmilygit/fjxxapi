@@ -8,27 +8,22 @@ const sitecfg = require('../../cfg/siteconfig.js')
 router.prefix('/newstureg')
 
 router.get('/getbaseinfo/', async (ctx, next) => {
-    if (!ctx.header.authorization) {
-        throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-        // return;
-    }
-    let wxuserinfo = {}
+    // if (!ctx.header.authorization) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    // }
+    // let wxuserinfo = {}
+    // try {
+    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    // } catch (err) {
+    //     throw new Error('关键数据链接失效或者是非法的！')
+    // }
     try {
-        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    } catch (err) {
-        throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-        // return;
-    }
-
-    try {
-        let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid })
-        let homeinfo = await homedb.myFindOne({ '身份证件号': baseinfo.pid })
-        if (homeinfo)
-            ctx.body = { 'error': false, 'result': homeinfo }
+        let baseinfo = await base.myFindOne({ 'wxopenid': 'o_BZpuDFj3Gi-psvtFFDRgl9id-0'})//wxuserinfo.openid })
+        let newstuinfo = await newstureg.myFindOne({ '身份证件号': baseinfo.pid })
+        if (newstuinfo)
+            ctx.body = { 'error': false, 'result': newstuinfo,'otherinfo':{classno:baseinfo.baseinfo.classno} }
         else
-            ctx.body = { 'error': true, 'message': '没有找到学生信息,请将问题上报!' }
+            ctx.body = { 'error': true, 'message': '没有找到学生信息,请将问题上报班主任!' }
         return
     } catch (err) {
         throw new Error('获取数据时出错:[' + err + ']')
