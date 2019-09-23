@@ -8,17 +8,17 @@ const sitecfg = require('../../cfg/siteconfig.js')
 router.prefix('/newstureg')
 
 router.get('/getbaseinfo/', async (ctx, next) => {
-    // if (!ctx.header.authorization) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    // }
-    // let wxuserinfo = {}
-    // try {
-    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    // } catch (err) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    // }
+    if (!ctx.header.authorization) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
+    let wxuserinfo = {}
     try {
-        let baseinfo = await base.myFindOne({ 'wxopenid': 'o_BZpuDFj3Gi-psvtFFDRgl9id-0'})//wxuserinfo.openid })
+        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    } catch (err) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
+    try {
+        let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid})//'o_BZpuDFj3Gi-psvtFFDRgl9id-0' })
         let newstuinfo = await newstureg.myFindOne({ '身份证件号': baseinfo.pid })
         if (newstuinfo)
             ctx.body = { 'error': false, 'result': newstuinfo,'otherinfo':{classno:baseinfo.baseinfo.classno} }
@@ -32,46 +32,30 @@ router.get('/getbaseinfo/', async (ctx, next) => {
     }
 })
 
-router.post('/savehomeinfo/', async (ctx, next) => {
+router.post('/savenewstuinfo/', async (ctx, next) => {
     if (!ctx.header.authorization) {
         throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-        // return;
     }
     let wxuserinfo = {}
     try {
         wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
     } catch (err) {
         throw new Error('关键数据链接失效或者是非法的！')
-        // ctx.body = { error: true, message: '关键数据链接失效或者是非法的！' }
-        // return;
     }
-    let homeinfo = ctx.request.body.homeinfo;
+    let newstuinfo = ctx.request.body.newstuinfo;
+    // ctx.body=newstuinfo;
+    // return;
     try {
         let baseinfo = await base.myFindOne({ 'wxopenid': wxuserinfo.openid })
-        let res = await homedb.myUpdateOne(
+        // let baseinfo=await base.myFindOne({'wxopenid':'o_BZpuDFj3Gi-psvtFFDRgl9id-0'})
+        let res = await newstureg.updateone(
             { '身份证件号': baseinfo.pid },
-            {
-                "成员1姓名": homeinfo.fname,
-                "成员1关系": homeinfo.frelation,
-                "成员1是否监护人": homeinfo.fguradian,
-                "成员1身份证件类型": homeinfo.fpidtype,
-                "成员1身份证件号": homeinfo.fpid,
-
-                "成员2姓名": homeinfo.sname,
-                "成员2关系": homeinfo.srelation,
-                "成员2是否监护人": homeinfo.sguradian,
-                "成员2身份证件类型": homeinfo.spidtype,
-                "成员2身份证件号": homeinfo.spid,
-            }
+            newstuinfo
         )
         ctx.body = { 'error': false, result: res }
     } catch (err) {
         throw new Error("保存时出错:[" + err + "]")
     }
-
-
-
 })
 
 

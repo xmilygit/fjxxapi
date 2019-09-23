@@ -33,7 +33,8 @@ var newstudentSchema=new mongoose.Schema({
     "成员2户口所在地行政区划":String,
     "成员2联系电话": String,
     "成员2是否监护人": String,
-    "成员2身份证件号": String
+    "成员2身份证件号": String,
+    "班号":String
 },{collection:'2019NSInfo'})
 
 newstudentSchema.statics.findall=async function(){
