@@ -26,7 +26,8 @@ var graduateinfoSchema = new mongoose.Schema({
     "hometype": String,
     "sigle": Boolean,
     "stulocal":Boolean,
-}, { collection: 'graduateinfo2' })
+    "regmainname":String,
+}, { collection: 'graduateinfo2014' })
 
 
 graduateinfoSchema.statics.myFindOne = async function (query, value) {

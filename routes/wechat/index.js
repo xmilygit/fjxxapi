@@ -13,6 +13,14 @@ const homeinfo = require('../../models/HomeInfo/homeinfo')
 
 router.prefix('/wechatforsvr')
 
+router.get("/",async(ctx, next)=>{
+    let signature=ctx.query.signature;
+    let echostr=ctx.query.echostr;
+    let timestamp=ctx.query.timestamp;
+    let nonce=ctx.query.nonce;
+    ctx.body=echostr;//signature+"|"+echostr+"|"+timestamp+"|"+nonce;
+
+})
 var api = new wechatapi(
     wechatconfig.wechatauth.appid,
     wechatconfig.wechatauth.appsecret
@@ -74,6 +82,7 @@ router.use(async (ctx, next) => {
     //var token = posttoken || ctx.query.token;
     if (ctx.header.authorization) {
         try {
+            //验证token合法性
             let token = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
             ctx.request.token = token;
         } catch (err) {
@@ -96,16 +105,19 @@ router.get('/binder/', async (ctx, next) => {
     // }
     //使用token认证，以上代码改为以下代码：
     if (!ctx.query.code) {
+        //如果没有获得code表示来源客户端不是微信
         ctx.body = errhtml;
         return;
     }
 
     if (ctx.request.token) {
+        //如果已经访问者已经获得token
         ctx.redirect(sitecfg.clientURL + "/?token=" + ctx.request.authorization)
         return;
     }
     //let code=ctx.query.code;
 
+    //访问者没有token只有code，通过 code获得token
     let wxuserinfo = {
         code: ctx.query.code,
         openid: null,
