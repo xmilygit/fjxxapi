@@ -57,12 +57,12 @@ router.get('/cfgtostring',async(ctx,next)=>{
 })
 
 function xls2json(resolve,reject){
-    let p = path.join(__dirname, '../public/upload/在校生信息.xlsx');
+    let p = path.join(__dirname, '../public/upload/2014.xlsx');
     console.log('path:' + p)
     xls({
         input:p,
         output:null,
-        sheet:'导入'
+        sheet:'Sheet1'
     },function(err,result){
         if(err){
             console.error(err)

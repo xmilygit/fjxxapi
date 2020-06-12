@@ -7,6 +7,7 @@ const fs = require('fs')
 const path = require('path')
 const multer = require('koa-multer');
 const xls = require('xls-to-json')
+const funcontrol=require('../../models/funcontrol.js')
 router.prefix('/sys')
 
 router.get('/', async (ctx, next) => {
@@ -250,5 +251,29 @@ function Enpassword(password) {
     sha1.update(password);
     return sha1.digest('hex')
 }
+router.get('/singlpasw',async(ctx,next)=>{
+    ctx.body=Enpassword('225(8)')
+})
 
+//获取开关信息
+router.get('/funstatus/',async(ctx,next)=>{
+    let funname=ctx.query.funname
+    try{
+        let rs=await funcontrol.FindByQuery({'funname':funname})
+        ctx.body = { 'error': false, 'result': rs[0].funvalue }
+    }catch(err){
+        ctx.body = { 'error': true, 'message': err.message };
+    }
+})
+//更新开关信息
+router.get('/funupdate/',async(ctx,next)=>{
+    let funname=ctx.query.funname
+    let value=ctx.query.value
+    try{
+        let rs=await funcontrol.Edit(funname,value)
+        ctx.body = { 'error': false, 'result': '更新完成' }
+    }catch(err){
+        ctx.body = { 'error': true, 'message': err.message };
+    }
+})
 module.exports = router
