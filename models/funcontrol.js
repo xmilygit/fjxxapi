@@ -17,7 +17,7 @@ funcontrolSchema.statics.FindByQuery=async function(query,fields){
 
 //更新
 funcontrolSchema.statics.Edit=async function(funname,value){
-    let result=await this.updateOne({funname:funname},{$set:{value:value}}).exec();
+    let result=await this.updateOne({'funname':funname},{$set:{'funvalue':value}}).exec();
     return result;
 }
 

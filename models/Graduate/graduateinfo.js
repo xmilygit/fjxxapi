@@ -71,11 +71,18 @@ graduateinfoSchema.statics.myPaging=async function (keyword, pagesize, lastid) {
         ]
     }
 
+    if(pagesize==-1){
+        reco = await this
+        .find(query)
+        .sort({ _id: -1 })
+        .exec();
+    }else{
     reco = await this
             .find(query)
             .sort({ _id: -1 })
             .limit(pagesize)
             .exec();
+    }
     let count=await this.countDocuments(countQuery).exec();
     return {"recordset":reco,"count":count}
 }

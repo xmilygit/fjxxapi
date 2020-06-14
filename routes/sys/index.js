@@ -267,7 +267,7 @@ router.get('/funstatus/',async(ctx,next)=>{
 })
 //更新开关信息
 router.get('/funupdate/',async(ctx,next)=>{
-    let funname=ctx.query.funname
+    let funname="graduate"
     let value=ctx.query.value
     try{
         let rs=await funcontrol.Edit(funname,value)
