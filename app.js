@@ -14,6 +14,7 @@ const db=require('./cfg/dbconfig');
 const sys=require('./routes/sys/index');
 const mark=require('./routes/sys/mark');
 const graduate=require('./routes/sys/graduate');
+const transschool=require('./routes/sys/transschool')
 const typekey=require('./routes/typekey/index');
 const sitenav=require('./routes/sitenav/index')
 const test=require('./routes/test');
@@ -82,6 +83,7 @@ app.use(homeinfo.routes(),homeinfo.allowedMethods())
 app.use(graduateinfo.routes(),graduateinfo.allowedMethods())
 app.use(newstudentreg.routes(),newstudentreg.allowedMethods())
 app.use(test.routes(),test.allowedMethods())
+app.use(transschool.routes(),transschool.allowedMethods())
 
 
 // error-handling
