@@ -2,8 +2,8 @@ const router = require('koa-router')()
 const mongoose = require('mongoose');
 const transschool = require('../../models/TransSchool/transschool.js')
 const multer = require('koa-multer')
-const path = require('path') 
-const fs=require('fs').promises;
+const path = require('path')
+const fs = require('fs').promises;
 
 router.prefix('/sys/transschool/')
 
@@ -47,46 +47,32 @@ router.post('/search/', async (ctx, next) => {
 })
 
 //控制上传文件存储方式，如果不设置默认情况下文件上传以随机字符且无后缀来存放
-function uploadDest(req,file,cb){
-    let pathstr=path.join(__dirname, '../../public/upload/transschool/'+req.body.path+'/');
-    fs.access(pathstr).then((a,b)=>{
-console.log(a)
-console.log(b)
-    }).catch((a,b)=>{
-        console.log(a)
-        console.log(b)
-    })
-    // try{
-    // let rs=await fs.access(pathstr)
-    // }catch(err){
-    //     console.log(err.message)
-    // }
+async function uploadDest(req, file, cb) {
+    let pathstr = path.join(__dirname, '../../public/upload/transschool/' + req.body.path + '/');
+    try {
+        let rs = await fs.access(pathstr);
+        cb(null,pathstr)
+    } catch (err) {
+        try {
+            let rs = await fs.mkdir(pathstr, { recursive: true })
+            cb(null,pathstr)
+        } catch (err) {
+            throw err
+        }
+    }
 }
 var storage = multer.diskStorage({
-    destination:uploadDest,
-    // destination: function (req, file, cb) {
-    //     let pathstr=path.join(__dirname, '../../public/upload/transschool/'+req.body.path+'/');
-    //     fs.access(pathstr,(err)=>{
-    //         if(err){
-    //             console.log('dir not exist')
-    //             fs.mkdir(pathstr,(err) => {
-    //                     if (err) throw err;
-    //                     cb(null,pathstr)
-    //                 });
-    //         }
-    //         cb(null,pathstr)
-    //     })
-    //  },
+    destination: uploadDest,
     filename: function (req, file, cb) {
-        var fileFormat = (file.originalname).split("."); 
-        cb(null, req.body.filename+ "." + fileFormat[fileFormat.length - 1])
+        var fileFormat = (file.originalname).split(".");
+        cb(null, req.body.filename + "." + fileFormat[fileFormat.length - 1])
     }
 })
 var upload = multer({
     storage: storage
 })
 router.post('/upload/', upload.single('file'), async (ctx, next) => {
-    ctx.body={'error':false,"result":'上传成功'}
+    ctx.body = { 'error': false, "result": '上传成功' }
 });
 // router.post('/upload/', async (ctx, next) => {
 //     try{
@@ -101,6 +87,6 @@ router.post('/upload/', upload.single('file'), async (ctx, next) => {
 //             "message": '上传失败:'+err.message,
 //         }
 //     }
-    
+
 // });
 module.exports = router
