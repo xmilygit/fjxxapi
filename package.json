@@ -26,6 +26,7 @@
     "koa-static": "^3.0.0",
     "koa-views": "^5.2.1",
     "koa2-cors": "^2.0.6",
+    "mime-types": "^2.1.27",
     "mongoose": "^5.2.6",
     "nunjucks": "~3.0.0 ",
     "xls-to-json": "^0.5.1"

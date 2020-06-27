@@ -30,6 +30,18 @@ transschoolSchema.statics.Save=async function(doc){
     let res=await obj.save();
     return res;
 }
+//更新记录
+transschoolSchema.statics.Update=async function(doc){
+    let id=doc._id;
+    delete doc._id;
+    let result = await this.updateOne({_id:id}, doc).exec()
+    return result
+}
+//删除记录
+transschoolSchema.statics.Del=async function(id){
+    let result=await this.deleteOne({_id:id}).exec()
+    return result;
+}
 
 //分页查询
 
