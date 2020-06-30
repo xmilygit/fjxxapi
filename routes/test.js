@@ -39,20 +39,20 @@ router.get('/xls2json', async (ctx, next) => {
     })
 })
 
-router.get('/webpagetopdf',async(ctx,next)=>{
+router.post('/webpagetopdf',async(ctx,next)=>{
 let findc=await findchrome({});
 let cpath=findc.executablePath;
 const browser=await pp.launch({
     executablePath:cpath,
 })
 const page=await browser.newPage();
-await page.goto('http://188.188.1.15:3000/testtable/',{waitUntil:'networkidle0'});
+await page.goto('http://192.168.3.151:3000/testtable/',{waitUntil:'networkidle0'});
 const res=await page.pdf({
     //path: 'baidu.pdf',
     printBackground:true,
 })
-ctx.type="application/octet-stream"
-ctx.set('Content-Disposition','attachment;filename="test.pdf"')
+// ctx.set('Content-Disposition','attachment;filename="test.pdf"')
+ctx.set('Content-Type', 'application/octet-stream;charset=utf-8')
 
 browser.close();
 ctx.body=res
