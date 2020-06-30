@@ -11,6 +11,9 @@ const crypto = require('crypto')
 const path = require('path')
 const xls=require('xls-to-json')
 const key=require('../cfg/key.js')
+const pp=require('puppeteer-core');
+const findchrome=require('../node_modules/carlo/lib/find_chrome')
+
 // const multer=require('koa-multer');
 router.prefix('/test')
 
@@ -34,6 +37,25 @@ router.get('/xls2json', async (ctx, next) => {
     .catch((err)=>{
         ctx.body=err;
     })
+})
+
+router.get('/webpagetopdf',async(ctx,next)=>{
+let findc=await findchrome({});
+let cpath=findc.executablePath;
+const browser=await pp.launch({
+    executablePath:cpath,
+})
+const page=await browser.newPage();
+await page.goto('http://188.188.1.15:3000/testtable/',{waitUntil:'networkidle0'});
+const res=await page.pdf({
+    //path: 'baidu.pdf',
+    printBackground:true,
+})
+ctx.type="application/octet-stream"
+ctx.set('Content-Disposition','attachment;filename="test.pdf"')
+
+browser.close();
+ctx.body=res
 })
 
 router.get('/cfgtostring',async(ctx,next)=>{
@@ -73,6 +95,8 @@ function xls2json(resolve,reject){
         }
     })
 }
+
+
 
 
 
