@@ -61,6 +61,21 @@ app.use(async (ctx, next) => {
   console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
+//拦截请求
+// app.use(async (ctx,next)=>{
+//   console.log('app拦截的访问:' + ctx.request.href)
+//   if (ctx.header.authorization) {
+//     try {
+//         //验证token合法性
+//         let token = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+//         ctx.request.token = token;
+//     } catch (err) {
+//         ctx.body = { vali: false, message: "验证token时出错：[" + err + "]程序终止!" };
+//         return;
+//     }
+// }
+//   await next()
+// })
 
 //koa-body
 // app.use(koabody({

@@ -124,25 +124,43 @@ router.post('/getresult/', async (ctx, next) => {
     }
 })
 
+//拦截所有请求，如果有token则将用户信息注入到请求中
+router.use(async (ctx, next) => {
+    console.log('拦截的访问:' + ctx.request.href)
+    //let token = ctx.header.authorization;
+    //var token = posttoken || ctx.query.token;
+    if (ctx.header.authorization) {
+        try {
+            //验证token合法性
+            let token = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+            ctx.request.token = token;
+        } catch (err) {
+            ctx.body = { vali: false, message: "验证token时出错：[" + err + "]程序终止!" };
+            return;
+        }
+    }
+    await next();
+})
+
 router.get('/graduatetableinfo/', async (ctx, next) => {
-    // if (!ctx.header.authorization) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    // }
-    // let wxuserinfo = {}
-    // try {
-    //     wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
-    // } catch (err) {
-    //     throw new Error('关键数据链接失效或者是非法的！')
-    // }
+    if (!ctx.header.authorization) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
+    let wxuserinfo = {}
+    try {
+        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    } catch (err) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
 
 
     try {
-        // let baseinfo = await base.myFindOne({
-        //     'wxopenid': wxuserinfo.openid
-        // })
+        let baseinfo = await base.myFindOne({
+            'wxopenid': wxuserinfo.openid
+        })
         let graduateinfo = await graduatetable.FindOne({
-            // 'pid': baseinfo.pid
-            'pid': '45030320071128101X'
+            'pid': baseinfo.pid
+            // 'pid': '45030320071128101X'
         })
         // let graduatebaseinfo = await graduateinfo.myFindOne({ '身份证件号': '450205198008141012' })
         if (graduateinfo)

@@ -6,10 +6,15 @@ const axios = require('axios')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const crypto = require('crypto')
-
+const wechat=require('co-wechat')
 const base = require('../../models/Fjxx');
 const homeinfo = require('../../models/HomeInfo/homeinfo')
-
+const app = require('../../app.js')
+const config={
+    token: wechatconfig.wechatauth.token,
+  appid: wechatconfig.wechatauth.appid,
+  encodingAESKey:null
+}
 
 router.prefix('/wechatforsvr')
 
@@ -21,6 +26,22 @@ router.get("/",async(ctx, next)=>{
     ctx.body=echostr;//signature+"|"+echostr+"|"+timestamp+"|"+nonce;
 
 })
+
+router.post("/",wechat(config).middleware(async(message,ctx)=>{
+    console.log(message);
+    if(message.Content="登记表"){
+        return {
+            type: "image",
+            content: {
+              mediaId: 'mediaId'
+            }
+          };
+    }
+}));
+
+// router.post("/",wechat(config,(req,res,next)=>{
+
+// }))
 var api = new wechatapi(
     wechatconfig.wechatauth.appid,
     wechatconfig.wechatauth.appsecret
@@ -37,7 +58,7 @@ var mymenu = {
         {
             "name": "测试",
             "type": "view",
-            "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/testwechat/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
+            "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/vwechatenter2020/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
         },
         {
             "name": '测试2',
@@ -159,7 +180,7 @@ router.get('/binder/', async (ctx, next) => {
             // }
             if (finduser.length == 1) wxuserinfo.isbinder = true
             let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
-            ctx.redirect(sitecfg.clientURL + "/?token=" + token)
+            ctx.redirect(sitecfg.clientURL + "?token=" + token)
             // ctx.redirect(sitecfg.serverURL + "/?token=" + token)
         }
     } catch (err) {

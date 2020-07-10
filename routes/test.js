@@ -17,6 +17,9 @@ const findchrome=require('../node_modules/carlo/lib/find_chrome')
 // const multer=require('koa-multer');
 router.prefix('/test')
 
+router.get('/output',async(ctx,next)=>{
+    ctx.body="abcd"
+})
 router.get('/2019ns',async(ctx,next)=>{
     let all=await nstest.findall()
     
@@ -39,22 +42,35 @@ router.get('/xls2json', async (ctx, next) => {
     })
 })
 
-router.post('/webpagetopdf',async(ctx,next)=>{
+router.get('/webpagetopdf',async(ctx,next)=>{
 let findc=await findchrome({});
 let cpath=findc.executablePath;
 const browser=await pp.launch({
     executablePath:cpath,
 })
 const page=await browser.newPage();
-await page.goto('http://192.168.3.151:3000/testtable/',{waitUntil:'networkidle0'});
-const res=await page.pdf({
-    //path: 'baidu.pdf',
-    printBackground:true,
-})
+await page.goto('http://mxthink.cross.echosite.cn/xmng/graduatetable',{waitUntil:'networkidle0'});
+//生成PDF
+// const res=await page.pdf({
+//     //path: 'baidu.pdf',
+//     printBackground:true,
+// })
 // ctx.set('Content-Disposition','attachment;filename="test.pdf"')
+// ctx.set('Content-Type', 'application/octet-stream;charset=utf-8')
+
+const res=await page.screenshot();
+// (
+//     {
+//     // printBackground:true,
+// //    path:"test.jpg",
+//     type:"jpeg"
+// }
+// )
+ctx.set('Content-Disposition','attachment;filename="test.png"')
 ctx.set('Content-Type', 'application/octet-stream;charset=utf-8')
 
 browser.close();
+// ctx.type="image/png"
 ctx.body=res
 })
 
@@ -79,7 +95,7 @@ router.get('/cfgtostring',async(ctx,next)=>{
 })
 
 function xls2json(resolve,reject){
-    let p = path.join(__dirname, '../public/upload/2014.xlsx');
+    let p = path.join(__dirname, '../public/upload/毕业生信息上交导入.xlsx');
     console.log('path:' + p)
     xls({
         input:p,
