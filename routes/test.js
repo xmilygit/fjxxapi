@@ -95,7 +95,7 @@ router.get('/cfgtostring',async(ctx,next)=>{
 })
 
 function xls2json(resolve,reject){
-    let p = path.join(__dirname, '../public/upload/毕业生信息上交导入.xlsx');
+    let p = path.join(__dirname, '../public/upload/signtemplate.xlsx');
     console.log('path:' + p)
     xls({
         input:p,
