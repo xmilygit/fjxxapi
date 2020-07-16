@@ -10,6 +10,7 @@ const wechat=require('co-wechat')
 const base = require('../../models/Fjxx');
 const homeinfo = require('../../models/HomeInfo/homeinfo')
 const app = require('../../app.js')
+const nss=require('../../models/NewStudent/newstudentsign.js')
 const config={
     token: wechatconfig.wechatauth.token,
   appid: wechatconfig.wechatauth.appid,
@@ -118,7 +119,80 @@ router.post('/valitoken/', async (ctx, next) => {
     ctx.body = { vali: true, isbinder: ctx.request.token.isbinder }
     return;
 })
+//特殊新生报名序号 wxopenid
+router.get('/binder2/', async (ctx, next) => {
+    // if (!ctx.query.code && !ctx.session.wxuserinfo) {
+    //     ctx.body = errhtml
+    //     return;
+    // }
+    //使用token认证，以上代码改为以下代码：
+    if (!ctx.query.code) {
+        //如果没有获得code表示来源客户端不是微信
+        ctx.body = errhtml;
+        return;
+    }
 
+    if (ctx.request.token) {
+        //如果已经访问者已经获得token
+        ctx.redirect(sitecfg.clientURL + "/?token=" + ctx.request.authorization)
+        return;
+    }
+    //let code=ctx.query.code;
+
+    //访问者没有token只有code，通过 code获得token
+    let wxuserinfo = {
+        code: ctx.query.code,
+        openid: null,
+        isbinder: false,
+        error: false
+    }
+
+    let getopenidurl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + wechatconfig.wechatauth.appid + "&secret=" + wechatconfig.wechatauth.appsecret + "&code=" + wxuserinfo.code + "&grant_type=authorization_code"
+
+
+    try {
+        let result = await axios.get(getopenidurl)
+        if (result.data.errcode) {
+            ctx.body = result.data.errmsg
+            return;
+        } else {
+            wxuserinfo.openid = result.data.openid;
+        }
+    } catch (err) {
+        //获取用户授权出错了，跳转到出错页面
+        console.log('获取用户授权出错:' + err)
+        wxuserinfo.error = true;
+        ctx.body = err;
+        return;
+    }
+
+    //wxuserinfo.openid="sadfsadfadf"
+    try {
+        if (!wxuserinfo.isbinder) {
+            let finduser = await nss.findbyquery({ 'wxopenid': wxuserinfo.openid })
+            // if (finduser.length == 1) {
+            //     wxuserinfo.isbinder = true;
+            //     let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
+            //     ctx.redirect(sitecfg.clientURL + "/?token=" + token + "&isbinder=" + wxuserinfo.isbinder)
+            //     return;
+            // } else {
+            //     ctx.redirect(sitecfg.clientURL+'/?openid='+wxuserinfo.openid)
+            //     return;
+            // }
+            if (finduser.length == 1) wxuserinfo.isbinder = true
+            let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
+            ctx.redirect(sitecfg.clientURL + "?token=" + token)
+            // ctx.redirect(sitecfg.serverURL + "/?token=" + token)
+        }
+    } catch (err) {
+        //根据openid 查询数据库时出错，这里后期要放置出错界面
+        wxuserinfo.error = true;
+        console.log(err)
+        ctx.body = err
+        return
+    }
+})
+//正常在校生查询 wxopenid
 router.get('/binder/', async (ctx, next) => {
     // if (!ctx.query.code && !ctx.session.wxuserinfo) {
     //     ctx.body = errhtml
@@ -202,7 +276,7 @@ router.post('/jsconfig/', async (ctx, ncext) => {
         throw new Error('JSSDK授权失败:[' + err + ']')
     }
 })
-//绑定微信用户帐号
+//绑定微信用户帐号(在校生)
 router.post('/binder/', async (ctx, next) => {
     // if (!ctx.request.token) {
     //     ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
@@ -251,6 +325,47 @@ router.post('/binder/', async (ctx, next) => {
         } else {
             //返回无该用户的提示
             ctx.body = { 'error': true, 'message': '该学生不存在，请检查姓名及密码输入是否正确！' }
+        }
+    } catch (err) {
+        throw new Error('执行绑定时出错：' + err)
+    }
+})
+//绑定微信用户帐号(新生获取报名号绑定)
+router.post('/binder2/', async (ctx, next) => {
+    let stuinfo = ctx.request.body.stuinfo
+    let wxuserinfo = {}
+    if (!ctx.request.token)
+        throw new Error('关键数据链接失效或者是非法的！')
+    wxuserinfo = ctx.request.token;
+    if (!stuinfo)
+        return;
+    try {
+        let user = await nss.findbyquery({
+            'stuname': stuinfo.stuname,
+            'sid':stuinfo.stupassword,
+        })
+        if (user.length!=0) {
+            if (user.wxopenid) {
+                //需要改进为申请重新绑定
+                ctx.body = { 'error': true, 'message': '该微信用户已经绑定！无需重复绑定！' }
+                return;
+            }
+            //存openid
+            let res = await nss.update(stuinfo.stupassword, { 'wxopenid': wxuserinfo.openid })
+            wxuserinfo.isbinder = true;
+            try {
+                delete wxuserinfo.exp;
+                delete wxuserinfo.iat;
+                let newtoken = await jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" })
+                ctx.body = { 'error': false, 'token': newtoken, 'isbinder': true };
+                return
+            } catch (err) {
+                ctx.body = { 'error': true, 'message': '重新授权过程中出错!' }
+                return
+            }
+        } else {
+            //返回无该用户的提示
+            ctx.body = { 'error': true, 'message': '该学生不存在，请检查姓名及报名序号是否正确！' }
         }
     } catch (err) {
         throw new Error('执行绑定时出错：' + err)

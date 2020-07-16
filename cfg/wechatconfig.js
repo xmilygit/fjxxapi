@@ -1,17 +1,17 @@
 //正式配置
-var wechatauth = {
-    appid: 'wx4e22ba98362ec444',
-    appsecret: '456d2b7769f5e91cd208a8399964d53f',
-    token: 'xmilyhh'
-}
+// var wechatauth = {
+//     appid: 'wx4e22ba98362ec444',
+//     appsecret: '456d2b7769f5e91cd208a8399964d53f',
+//     token: 'xmilyhh'
+// }
 
 // 测试号配置
-// var wechatauth = {
-//     appid: 'wxba8db6584881bbab',
-//     appsecret: '7d234a1b76eb803e6683d3a8945985bb',
-//     token: 'xmilyhh',
-//     encodingAESKey:'xmilyhh'
-// };
+var wechatauth = {
+    appid: 'wxba8db6584881bbab',
+    appsecret: '7d234a1b76eb803e6683d3a8945985bb',
+    token: 'xmilyhh',
+    encodingAESKey:'xmilyhh'
+};
 //MXThink测试用
 /*
 var wechatauth={

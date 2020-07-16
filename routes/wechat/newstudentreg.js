@@ -8,12 +8,41 @@ const nss = require('../../models/NewStudent/newstudentsign.js')
 
 router.prefix('/newstureg')
 
+//拦截所有请求，如果有token则将用户信息注入到请求中
+router.use(async (ctx, next) => {
+    console.log('拦截的访问:' + ctx.request.href)
+    //let token = ctx.header.authorization;
+    //var token = posttoken || ctx.query.token;
+    if (ctx.header.authorization) {
+        try {
+            //验证token合法性
+            let token = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+            ctx.request.token = token;
+        } catch (err) {
+            ctx.body = { vali: false, message: "验证token时出错：[" + err + "]程序终止!" };
+            return;
+        }
+    }
+    await next();
+})
+
 //网上报名序号获取
 router.get('/getsignfid', async (ctx, next) => {
-    let sid = ctx.query.sid;
-    let name = ctx.query.stuname;
+    
+    if (!ctx.header.authorization) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
+    let wxuserinfo = {}
     try {
-        let res = await nss.find({ "sid": sid, "stuname": name })
+        wxuserinfo = await jwt.verify(ctx.header.authorization, sitecfg.tokenKey);
+    } catch (err) {
+        throw new Error('关键数据链接失效或者是非法的！')
+    }
+
+    try {
+        //let res = await nss.find({ "sid": sid, "stuname": name })
+        let res=await nss.getOne({"wxopenid":wxuserinfo.openid})
+        //let res=await nss.getOne({"wxopenid":'o_BZpuDFj3Gi-psvtFFDRgl9id-0'})
         if (res) {
             ctx.body = { 'error': false, 'result': res }
         } else {

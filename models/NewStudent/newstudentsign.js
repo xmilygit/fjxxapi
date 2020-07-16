@@ -12,10 +12,19 @@ var newstudentsignSchema=new mongoose.Schema({
     "spid":String,
     "oldspid":String,
     "wxopenid":String,
+    "type":String,
+    "window":String,
+    "fgx":String,
+    "sgx":String
 },{collection:'newstudentsign'})
 
 
-newstudentsignSchema.statics.find=async function(query){
+newstudentsignSchema.statics.findbyquery=async function(query){
+    let result=await this.find(query).exec()
+    return result;
+}
+
+newstudentsignSchema.statics.getOne=async function(query){
     let result=await this.findOne(query).exec()
     return result;
 }
