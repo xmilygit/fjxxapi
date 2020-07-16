@@ -194,6 +194,8 @@ router.get('/binder2/', async (ctx, next) => {
 })
 //正常在校生查询 wxopenid
 router.get('/binder/', async (ctx, next) => {
+    //因报名序号不同目录而做的更改
+    sitecfg.clientURL="http://mxthink.cross.echosite.cn/wechat/binder/";
     // if (!ctx.query.code && !ctx.session.wxuserinfo) {
     //     ctx.body = errhtml
     //     return;
@@ -278,6 +280,8 @@ router.post('/jsconfig/', async (ctx, ncext) => {
 })
 //绑定微信用户帐号(在校生)
 router.post('/binder/', async (ctx, next) => {
+    //因报名序号不同目录而做的更改
+    sitecfg.clientURL="http://mxthink.cross.echosite.cn/wechat/binder/";
     // if (!ctx.request.token) {
     //     ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
     //     return;
