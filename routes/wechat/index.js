@@ -195,7 +195,7 @@ router.get('/binder2/', async (ctx, next) => {
 //正常在校生查询 wxopenid
 router.get('/binder/', async (ctx, next) => {
     //因报名序号不同目录而做的更改
-    sitecfg.clientURL="http://mxthink.cross.echosite.cn/wechat/binder/";
+    let url2="http://mxthink.cross.echosite.cn/wechat/binder/";
     // if (!ctx.query.code && !ctx.session.wxuserinfo) {
     //     ctx.body = errhtml
     //     return;
@@ -209,7 +209,8 @@ router.get('/binder/', async (ctx, next) => {
 
     if (ctx.request.token) {
         //如果已经访问者已经获得token
-        ctx.redirect(sitecfg.clientURL + "/?token=" + ctx.request.authorization)
+        //ctx.redirect(sitecfg.clientURL + "/?token=" + ctx.request.authorization)
+        ctx.redirect(url2 + "/?token=" + ctx.request.authorization)
         return;
     }
     //let code=ctx.query.code;
@@ -256,8 +257,9 @@ router.get('/binder/', async (ctx, next) => {
             // }
             if (finduser.length == 1) wxuserinfo.isbinder = true
             let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
-            ctx.redirect(sitecfg.clientURL + "?token=" + token)
-            // ctx.redirect(sitecfg.serverURL + "/?token=" + token)
+            //ctx.redirect(sitecfg.clientURL + "?token=" + token)
+            ctx.redirect(url2 + "?token=" + token)
+            
         }
     } catch (err) {
         //根据openid 查询数据库时出错，这里后期要放置出错界面
