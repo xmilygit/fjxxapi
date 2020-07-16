@@ -181,7 +181,8 @@ router.get('/binder2/', async (ctx, next) => {
             // }
             if (finduser.length == 1) wxuserinfo.isbinder = true
             let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
-            ctx.redirect(sitecfg.clientURL + "?token=" + token)
+            // ctx.redirect(sitecfg.clientURL + "?token=" + token)
+            ctx.redirect("http://mxthink.cross.echosite.cn/vwechatenter2020/" + "?token=" + token)
             // ctx.redirect(sitecfg.serverURL + "/?token=" + token)
         }
     } catch (err) {
