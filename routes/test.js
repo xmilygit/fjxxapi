@@ -12,7 +12,7 @@ const path = require('path')
 const xls=require('xls-to-json')
 const key=require('../cfg/key.js')
 const pp=require('puppeteer-core');
-
+const ExcelJS = require('exceljs');
 const nss=require('../models/NewStudent/newstudentsign.js');
 const findchrome=require('../node_modules/carlo/lib/find_chrome')
 
@@ -99,15 +99,48 @@ router.get('/cfgtostring',async(ctx,next)=>{
 router.get('/datatoexcel',async(ctx,next)=>{
     //let data=await nss.findbyquery({});
     //ctx.body=data
-    let p = path.join(__dirname, '../public/upload/报名数据.xlsx');
-    
-    
+    //let p = path.join(__dirname, '../public/upload/报名数据.xlsx');
+    let data=await xls2json2("../public/upload/20200720报名数据导出.xlsx","桂林小学报名数据")
+    let wb=new ExcelJS.stream.xlsx.WorkbookWriter();
+    let st=wb.addWorksheet('房产查询');
+    st.columns=[
+        {header:"姓名",key:"name"},
+        {header:"身份证号",key:"pid"},
+    ]
+    let count=data.length;
+    let k=0;
+    for(let o in data){
+        if(data[o].学生类型=="A户籍生"){
+            st.addRow({name:data[o].学生姓名,pid:data[o].学生身份证号}).commit();
+            st.addRow({name:data[o].成员1姓名,pid:data[o].成员1身份证件号}).commit();
+            st.addRow({name:data[o].成员2姓名,pid:data[o].成员2身份证件号}).commit();
+        }
+        k++
+        console.log(k+"/"+count);
+    }
 
-
-    
-
+    ctx.body=await wb.commit();
 })
-
+function xls2json2(filepath,sheet){
+    return new Promise((resolve,reject)=>{
+        let p = path.join(__dirname, filepath);
+        console.log('path:' + p)
+        xls({
+            input:p,
+            output:null,
+            sheet:sheet
+        },function(err,result){
+            if(err){
+                console.error(err)
+                reject(err)
+            }else{
+                console.log(result)
+                resolve(result)
+            }
+        }) 
+    })
+}
+//https://www.jianshu.com/p/8aa148435499
 function xls2json(resolve,reject){
     let p = path.join(__dirname, '../public/upload/signtemplate.xlsx');
     console.log('path:' + p)
