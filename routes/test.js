@@ -12,6 +12,8 @@ const path = require('path')
 const xls=require('xls-to-json')
 const key=require('../cfg/key.js')
 const pp=require('puppeteer-core');
+
+const nss=require('../models/NewStudent/newstudentsign.js');
 const findchrome=require('../node_modules/carlo/lib/find_chrome')
 
 // const multer=require('koa-multer');
@@ -92,6 +94,18 @@ router.get('/cfgtostring',async(ctx,next)=>{
 
 //没成功
     //ctx.body=crypted
+})
+
+router.get('/datatoexcel',async(ctx,next)=>{
+    //let data=await nss.findbyquery({});
+    //ctx.body=data
+    let p = path.join(__dirname, '../public/upload/报名数据.xlsx');
+    
+    
+
+
+    
+
 })
 
 function xls2json(resolve,reject){
