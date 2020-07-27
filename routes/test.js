@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 const base = require('../models/Fjxx');
 const nstest=require('../models/NewStudent/newstudent')
 const crypto = require('crypto')
-// const fs=require('fs')
+const fs=require('fs')
 const path = require('path')
 const xls=require('xls-to-json')
 const key=require('../cfg/key.js')
@@ -96,16 +96,51 @@ router.get('/cfgtostring',async(ctx,next)=>{
     //ctx.body=crypted
 })
 
+router.get('/datatoexcel2',async(ctx,next)=>{
+    // let ws=fs.createWriteStream('./wb.xlsx')
+    // var workbook=new ExcelJS.stream.xlsx.WorkbookWriter({
+        //filename:'./wb.xlsx'
+        // stream:ws
+    // });
+    var workbook=new ExcelJS.stream.xlsx.WorkbookWriter();
+    var worksheet=workbook.addWorksheet('Sheet');
+    worksheet.columns=[
+        {header:"id",key:"id"},
+        {header:"name",key:"name"},
+        {header:"phone",key:"phone"},
+    ];
+    var data=[{
+        id:100,
+        name:'abc',
+        phone:'1231123123'
+    }];
+    for(let i in data){
+        worksheet.addRow(data[i]).commit();
+    }
+    await workbook.commit();
+    ctx.body=workbook
+})
+
 router.get('/datatoexcel',async(ctx,next)=>{
     //let data=await nss.findbyquery({});
     //ctx.body=data
     //let p = path.join(__dirname, '../public/upload/报名数据.xlsx');
     let data=await xls2json2("../public/upload/20200720报名数据导出.xlsx","桂林小学报名数据")
-    let wb=new ExcelJS.stream.xlsx.WorkbookWriter();
+    let wb=new ExcelJS.stream.xlsx.WorkbookWriter({
+        filename:"./wb.xlsx"
+    });
     let st=wb.addWorksheet('房产查询');
+    let st2=wb.addWorksheet('居住证查询');
     st.columns=[
         {header:"姓名",key:"name"},
         {header:"身份证号",key:"pid"},
+    ]
+    st2.columns=[
+        {header:"姓名",key:'name'},
+        {header:"性别",key:'gender'},
+        {header:"居住证持有人",key:'name2'},
+        {header:"持有人身份证号",key:'pid'},
+        {header:"联系电话",key:'tel'},
     ]
     let count=data.length;
     let k=0;
@@ -114,12 +149,30 @@ router.get('/datatoexcel',async(ctx,next)=>{
             st.addRow({name:data[o].学生姓名,pid:data[o].学生身份证号}).commit();
             st.addRow({name:data[o].成员1姓名,pid:data[o].成员1身份证件号}).commit();
             st.addRow({name:data[o].成员2姓名,pid:data[o].成员2身份证件号}).commit();
+        }else{
+            let name2=data[o].产权房证持有人居住证持有人.trim();
+            let tel=''
+            if(name2==data[o].成员1姓名.trim()){
+                tel=data[o].成员1联系电话
+            }else{
+                tel=data[o].成员2联系电话
+            }
+            st2.addRow(
+                {
+                    name:data[o].学生姓名,
+                    gender:data[o].性别,
+                    name2:data[o].产权房证持有人居住证持有人,
+                    pid:data[o].持有人身份证件号,
+                    tel:tel
+                }
+            ).commit();
         }
         k++
         console.log(k+"/"+count);
     }
 
-    ctx.body=await wb.commit();
+    wb.commit();
+    ctx.body="ok"
 })
 function xls2json2(filepath,sheet){
     return new Promise((resolve,reject)=>{
