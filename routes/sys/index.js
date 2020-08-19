@@ -316,7 +316,7 @@ function Enpassword(password) {
     return sha1.digest('hex')
 }
 router.get('/singlpasw', async (ctx, next) => {
-    ctx.body = Enpassword('225(8)')
+    ctx.body = Enpassword('060276')
 })
 
 //获取开关信息

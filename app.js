@@ -22,6 +22,7 @@ const wechat=require('./routes/wechat/index')
 const homeinfo=require('./routes/wechat/homeinfo')
 const graduateinfo=require('./routes/wechat/graduateinfo')
 const newstudentreg=require('./routes/wechat/newstudentreg')
+const student=require('./routes/wechat/student.js')
 
 
 // error handler
@@ -99,8 +100,7 @@ app.use(graduateinfo.routes(),graduateinfo.allowedMethods())
 app.use(newstudentreg.routes(),newstudentreg.allowedMethods())
 app.use(test.routes(),test.allowedMethods())
 app.use(transschool.routes(),transschool.allowedMethods())
-
-
+app.use(student.routes(),student.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)

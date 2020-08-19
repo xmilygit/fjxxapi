@@ -6,38 +6,116 @@ const axios = require('axios')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const crypto = require('crypto')
-const wechat=require('co-wechat')
+const wechat = require('co-wechat')
 const base = require('../../models/Fjxx');
 const homeinfo = require('../../models/HomeInfo/homeinfo')
 const app = require('../../app.js')
-const nss=require('../../models/NewStudent/newstudentsign.js')
-const config={
+const nss = require('../../models/NewStudent/newstudentsign.js')
+const nsn = require('../../models/NewStudent/newstudentnotice.js')
+const mongodb = require('mongoose')
+const config = {
     token: wechatconfig.wechatauth.token,
-  appid: wechatconfig.wechatauth.appid,
-  encodingAESKey:null
+    appid: wechatconfig.wechatauth.appid,
+    encodingAESKey: null
 }
 
 router.prefix('/wechatforsvr')
 
-router.get("/",async(ctx, next)=>{
-    let signature=ctx.query.signature;
-    let echostr=ctx.query.echostr;
-    let timestamp=ctx.query.timestamp;
-    let nonce=ctx.query.nonce;
-    ctx.body=echostr;//signature+"|"+echostr+"|"+timestamp+"|"+nonce;
+router.get("/", async (ctx, next) => {
+    let signature = ctx.query.signature;
+    let echostr = ctx.query.echostr;
+    let timestamp = ctx.query.timestamp;
+    let nonce = ctx.query.nonce;
+    ctx.body = echostr;//signature+"|"+echostr+"|"+timestamp+"|"+nonce;
 
 })
-
-router.post("/",wechat(config).middleware(async(message,ctx)=>{
-    console.log(message);
-    if(message.Content="登记表"){
-        return {
-            type: "image",
-            content: {
-              mediaId: 'mediaId'
-            }
-          };
+const templateMsg = {
+    // id: "k0LQ35MaRiRiQXif4EynZU609CAOEkeCqHU_CD3dpbk",
+    id:"3wyDQ1M-pZwMZRAImEZYE2LW-AljrHgh9M9LB2TOQnA",
+    url: "",
+    data: {
+        first: {
+            value: '\040\040\040\040\040\040\040\040XXX小孩的家长您好，为方便领取入学通知书，学校采取错峰领取通知书的方式进行发放，特通知如下：',
+            color: "",
+        },
+        keyword1: {
+            value: "桂林市凤集小学",
+            color: ""
+        },
+        keyword2: {
+            value: "学校教导处",
+            color: ""
+        },
+        keyword3: {
+            value: "2020年8月20日",
+            color: ""
+        },
+        keyword4: {
+            value: "\r\040\040\040\040\040\040\040\040请家长于8月20日 上午9：00到学校领取入学通知书（领取时请出示该条通知，及学生的户口本，并翻至小孩所在那一页）。",
+            color: ""
+        },
+        remark: {
+            value: "学生姓名：XXX，\r报名序号：XXX，\r面审序号：XXX\r领取时请告知面审序号",
+            color: ""
+        }
     }
+}
+async function sendtemplateMsg() {
+    let wxuser = await nsn.findByQuery({ _id: { $gt: mongodb.Types.ObjectId('5f3d165efa1e0c24f8007b43') } })
+    for (let o in wxuser) {
+        templateMsg.url="http://mxthink.cross.echosite.cn/xmng/notice?wxopenid="+wxuser[o].openid
+        templateMsg.data.first.value = '\040\040\040\040\040\040\040\040' + wxuser[o].学生姓名 + '的家长您好，为方便领取入学通知书，学校采取错峰领取通知书的方式进行发放，特通知如下：';
+        templateMsg.data.keyword4.value = "\r\040\040\040\040\040\040\040\040请家长于" + wxuser[o].time + "到学校领取入学通知书（领取时请出示该条通知或者出示学生的户口本，并翻至小孩所在那一页）。"
+        templateMsg.data.remark.value = "学生姓名：" + wxuser[o].学生姓名 + "，\r报名序号：" + wxuser[o].报名序号 + "，\r面审序号：" + wxuser[o].fid + "\r领取时请告知面审序号\r点击该通知确认收到"
+        try {
+            let res = await api.sendTemplate(wxuser[o].openid, templateMsg.id, templateMsg.url, "#173177", templateMsg.data);
+            console.log("完成发送：" + res.msgid)
+            await nsn.updateone({openid:wxuser[o].openid},{$set:{"msgid":res.msgid}})
+        } catch (err) {
+            await nsn.updateone({openid:wxuser[o].openid},{$set:{"msgid":err.message}})
+            console.log(err.message)
+        }
+    };
+    console.log(wxuser)
+}
+//处理微信端消息的总入口
+router.post("/", wechat(config).middleware(async (message, ctx) => {
+    console.log(message);
+    let key1 = /招生|2020招生|新生入学|入学|指南|招生指南|报名/gi
+    if (message.MsgType === "text") {
+        if (key1.test(message.Content)) {
+            return '';//"命中" + message.Content
+        } else if (message.Content === "模板消息") {
+            // api.sendTemplate('o_BZpuJhebCWr1dCf1bpvgNDSuok', templateMsg.id, templateMsg.url, "#173177", templateMsg.data);
+            sendtemplateMsg();
+            return ""
+        } else {
+            return "该公众号暂不支持在线消息回复功能。了解2020秋季招生信息请回复“招生”，了解2020网上报名流程请回复“网上报名”"
+        }
+        // return message.Content
+    } else if (message.MsgType === "event") {
+        if (message.Event === "subscribe") {
+            return "感谢订阅"
+        } else if (message.Event === "TEMPLATESENDJOBFINISH") {
+            if (message.Status === 'success') {
+                console.log("收到模板消息,消息ID：" + message.MsgID)
+                await nsn.updateone({msgid:message.MsgID},{$set:{"sendresult":'收到'}})
+            } else {
+                console.log("拒收模板消息" + message.MsgID)
+                await nsn.updateone({msgid:message.MsgID},{$set:{"sendresult":'拒收'}})
+            }
+        }
+    } else {
+        return "该公众号目前不支持非文本消息的处理功能。"
+    }
+    // if(message.Content="登记表"){
+    //     return {
+    //         type: "image",
+    //         content: {
+    //           mediaId: 'mediaId'
+    //         }
+    //       };
+    // }
 }));
 
 // router.post("/",wechat(config,(req,res,next)=>{
@@ -52,20 +130,26 @@ var api = new wechatapi(
 var mymenu = {
     "button": [
         {
+            "name": "和美凤集",
+            "type": "view",
+            "url": 'https://mp.weixin.qq.com/mp/homepage?__biz=MzIxNjcyNDEzMg==&hid=1&sn=c7ad585fa9ceeb4aea3fae241481ffb7'
+        },
+        {
             "name": "我的凤集",
             "type": "view",
             "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/wechat/binder/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
         },
-        {
-            "name": "测试",
-            "type": "view",
-            "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/vwechatenter2020/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
-        },
-        {
-            "name": '测试2',
-            "type": "view",
-            "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink2.cross.echosite.cn/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
-        }
+        
+        // {
+        //     "name": "测试",
+        //     "type": "view",
+        //     "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/vwechatenter2020/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
+        // },
+        // {
+        //     "name": '测试2',
+        //     "type": "view",
+        //     "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink2.cross.echosite.cn/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
+        // }
     ]
 };
 
@@ -196,7 +280,7 @@ router.get('/binder2/', async (ctx, next) => {
 //正常在校生查询 wxopenid
 router.get('/binder/', async (ctx, next) => {
     //因报名序号不同目录而做的更改
-    let url2="http://mxthink.cross.echosite.cn/wechat/binder/";
+    let url2 = "http://mxthink.cross.echosite.cn/wechat/binder/";
     // if (!ctx.query.code && !ctx.session.wxuserinfo) {
     //     ctx.body = errhtml
     //     return;
@@ -260,7 +344,7 @@ router.get('/binder/', async (ctx, next) => {
             let token = jwt.sign(wxuserinfo, sitecfg.tokenKey, { expiresIn: "1h" });
             //ctx.redirect(sitecfg.clientURL + "?token=" + token)
             ctx.redirect(url2 + "?token=" + token)
-            
+
         }
     } catch (err) {
         //根据openid 查询数据库时出错，这里后期要放置出错界面
@@ -284,7 +368,7 @@ router.post('/jsconfig/', async (ctx, ncext) => {
 //绑定微信用户帐号(在校生)
 router.post('/binder/', async (ctx, next) => {
     //因报名序号不同目录而做的更改
-    sitecfg.clientURL="http://mxthink.cross.echosite.cn/wechat/binder/";
+    sitecfg.clientURL = "http://mxthink.cross.echosite.cn/wechat/binder/";
     // if (!ctx.request.token) {
     //     ctx.body = { error: true, message: '数据链接失效或者是非法的！' }
     //     return;
@@ -349,9 +433,9 @@ router.post('/binder2/', async (ctx, next) => {
     try {
         let user = await nss.findbyquery({
             'stuname': stuinfo.stuname,
-            'sid':stuinfo.stupassword,
+            'sid': stuinfo.stupassword,
         })
-        if (user.length!=0) {
+        if (user.length != 0) {
             if (user.wxopenid) {
                 //需要改进为申请重新绑定
                 ctx.body = { 'error': true, 'message': '该微信用户已经绑定！无需重复绑定！' }
