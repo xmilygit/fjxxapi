@@ -60,8 +60,9 @@ const templateMsg = {
         }
     }
 }
+//发送“学校通知”模板消息
 async function sendtemplateMsg() {
-    let wxuser = await nsn.findByQuery({ _id: { $gt: mongodb.Types.ObjectId('5f3d165efa1e0c24f8007b43') } })
+    let wxuser = await nsn.findByQuery({})
     for (let o in wxuser) {
         templateMsg.url="http://mxthink.cross.echosite.cn/xmng/notice?wxopenid="+wxuser[o].openid
         templateMsg.data.first.value = '\040\040\040\040\040\040\040\040' + wxuser[o].学生姓名 + '的家长您好，为方便领取入学通知书，学校采取错峰领取通知书的方式进行发放，特通知如下：';
@@ -78,12 +79,18 @@ async function sendtemplateMsg() {
     };
     console.log(wxuser)
 }
+//发送指定media_id图文消息
+async function sendmpnewsMsg(){
+    let url='https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token='+access_token
+    console.log(url)
+}
 //处理微信端消息的总入口
 router.post("/", wechat(config).middleware(async (message, ctx) => {
     console.log(message);
     let key1 = /招生|2020招生|新生入学|入学|指南|招生指南|报名/gi
     if (message.MsgType === "text") {
         if (key1.test(message.Content)) {
+            sendmpnewsMsg();
             return '';//"命中" + message.Content
         } else if (message.Content === "模板消息") {
             // api.sendTemplate('o_BZpuJhebCWr1dCf1bpvgNDSuok', templateMsg.id, templateMsg.url, "#173177", templateMsg.data);
@@ -121,9 +128,14 @@ router.post("/", wechat(config).middleware(async (message, ctx) => {
 // router.post("/",wechat(config,(req,res,next)=>{
 
 // }))
+var access_token=null;
 var api = new wechatapi(
     wechatconfig.wechatauth.appid,
-    wechatconfig.wechatauth.appsecret
+    wechatconfig.wechatauth.appsecret,
+    null,
+    function (token){
+        access_token=token
+    }
 );
 
 //菜单配置
