@@ -18,7 +18,15 @@ const config = {
     appid: wechatconfig.wechatauth.appid,
     encodingAESKey: null
 }
-
+var access_token=null;
+var api = new wechatapi(
+    wechatconfig.wechatauth.appid,
+    wechatconfig.wechatauth.appsecret,
+    null,
+    function (token){
+        access_token=token
+    }
+);
 router.prefix('/wechatforsvr')
 
 router.get("/", async (ctx, next) => {
@@ -79,25 +87,20 @@ async function sendtemplateMsg() {
     };
     console.log(wxuser)
 }
-//发送指定media_id图文消息
-async function sendmpnewsMsg(){
-    let url='https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token='+access_token
-    console.log(url)
-}
 //处理微信端消息的总入口
 router.post("/", wechat(config).middleware(async (message, ctx) => {
     console.log(message);
     let key1 = /招生|2020招生|新生入学|入学|指南|招生指南|报名/gi
     if (message.MsgType === "text") {
         if (key1.test(message.Content)) {
-            sendmpnewsMsg();
+            api.sendMpNews(message.FromUserName,'sXY3yUDv9mge_hU9CtupkuYeDaDMv7dGiQ36-SMNVMI')
             return '';//"命中" + message.Content
         } else if (message.Content === "模板消息") {
             // api.sendTemplate('o_BZpuJhebCWr1dCf1bpvgNDSuok', templateMsg.id, templateMsg.url, "#173177", templateMsg.data);
             sendtemplateMsg();
             return ""
         } else {
-            return "该公众号暂不支持在线消息回复功能。了解2020秋季招生信息请回复“招生”，了解2020网上报名流程请回复“网上报名”"
+            return "该公众号暂不支持在线消息回复功能。了解2020秋季招生信息请回复“招生”。"//，了解2020网上报名流程请回复“网上报名”"
         }
         // return message.Content
     } else if (message.MsgType === "event") {
@@ -128,15 +131,7 @@ router.post("/", wechat(config).middleware(async (message, ctx) => {
 // router.post("/",wechat(config,(req,res,next)=>{
 
 // }))
-var access_token=null;
-var api = new wechatapi(
-    wechatconfig.wechatauth.appid,
-    wechatconfig.wechatauth.appsecret,
-    null,
-    function (token){
-        access_token=token
-    }
-);
+
 
 //菜单配置
 var mymenu = {
