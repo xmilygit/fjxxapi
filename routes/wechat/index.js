@@ -13,18 +13,19 @@ const app = require('../../app.js')
 const nss = require('../../models/NewStudent/newstudentsign.js')
 const nsn = require('../../models/NewStudent/newstudentnotice.js')
 const mongodb = require('mongoose')
+const { createTags } = require('co-wechat-api/lib/api_user')
 const config = {
     token: wechatconfig.wechatauth.token,
     appid: wechatconfig.wechatauth.appid,
     encodingAESKey: null
 }
-var access_token=null;
+var access_token = null;
 var api = new wechatapi(
     wechatconfig.wechatauth.appid,
     wechatconfig.wechatauth.appsecret,
     null,
-    function (token){
-        access_token=token
+    function (token) {
+        access_token = token
     }
 );
 router.prefix('/wechatforsvr')
@@ -39,7 +40,7 @@ router.get("/", async (ctx, next) => {
 })
 const templateMsg = {
     // id: "k0LQ35MaRiRiQXif4EynZU609CAOEkeCqHU_CD3dpbk",
-    id:"3wyDQ1M-pZwMZRAImEZYE2LW-AljrHgh9M9LB2TOQnA",
+    id: "3wyDQ1M-pZwMZRAImEZYE2LW-AljrHgh9M9LB2TOQnA",
     url: "",
     data: {
         first: {
@@ -72,20 +73,35 @@ const templateMsg = {
 async function sendtemplateMsg() {
     let wxuser = await nsn.findByQuery({})
     for (let o in wxuser) {
-        templateMsg.url="http://mxthink.cross.echosite.cn/xmng/notice?wxopenid="+wxuser[o].openid
+        templateMsg.url = "http://mxthink.cross.echosite.cn/xmng/notice?wxopenid=" + wxuser[o].openid
         templateMsg.data.first.value = '\040\040\040\040\040\040\040\040' + wxuser[o].学生姓名 + '的家长您好，为方便领取入学通知书，学校采取错峰领取通知书的方式进行发放，特通知如下：';
         templateMsg.data.keyword4.value = "\r\040\040\040\040\040\040\040\040请家长于" + wxuser[o].time + "到学校领取入学通知书（领取时请出示该条通知或者出示学生的户口本，并翻至小孩所在那一页）。"
         templateMsg.data.remark.value = "学生姓名：" + wxuser[o].学生姓名 + "，\r报名序号：" + wxuser[o].报名序号 + "，\r面审序号：" + wxuser[o].fid + "\r领取时请告知面审序号\r点击该通知确认收到"
         try {
             let res = await api.sendTemplate(wxuser[o].openid, templateMsg.id, templateMsg.url, "#173177", templateMsg.data);
             console.log("完成发送：" + res.msgid)
-            await nsn.updateone({openid:wxuser[o].openid},{$set:{"msgid":res.msgid}})
+            await nsn.updateone({ openid: wxuser[o].openid }, { $set: { "msgid": res.msgid } })
         } catch (err) {
-            await nsn.updateone({openid:wxuser[o].openid},{$set:{"msgid":err.message}})
+            await nsn.updateone({ openid: wxuser[o].openid }, { $set: { "msgid": err.message } })
             console.log(err.message)
         }
     };
     console.log(wxuser)
+}
+
+async function sendMsg(openidlist, msg) {
+    for (let o in openidlist) {
+        templateMsg.data.first.value = '学校提醒';
+        templateMsg.data.keyword3.value = "2020年8月22日"
+        templateMsg.data.keyword4.value = '\040\040\040\040\040\040\040\040' + '家长您好，收到该条消息说明您尚未按入学通知书上的要求添加“桂林市凤集小学2020级新生”QQ群，请收到该条消息后及时添加，以免遗漏学校重要通知和消息。QQ群号为：775286239 或者扫描入学通知上的二维码。';
+        templateMsg.data.remark.value = ""
+        try {
+            let res = await api.sendTemplate(openidlist[o], templateMsg.id, '', "#173177", templateMsg.data);
+            console.log("完成发送：" + res.msgid)
+        } catch (err) {
+            console.log(err.message)
+        }
+    }
 }
 //处理微信端消息的总入口
 router.post("/", wechat(config).middleware(async (message, ctx) => {
@@ -93,11 +109,13 @@ router.post("/", wechat(config).middleware(async (message, ctx) => {
     let key1 = /招生|2020招生|新生入学|入学|指南|招生指南|报名/gi
     if (message.MsgType === "text") {
         if (key1.test(message.Content)) {
-            api.sendMpNews(message.FromUserName,'sXY3yUDv9mge_hU9CtupkuYeDaDMv7dGiQ36-SMNVMI')
+            api.sendMpNews(message.FromUserName, 'sXY3yUDv9mge_hU9CtupkuYeDaDMv7dGiQ36-SMNVMI')
             return '';//"命中" + message.Content
         } else if (message.Content === "模板消息") {
             // api.sendTemplate('o_BZpuJhebCWr1dCf1bpvgNDSuok', templateMsg.id, templateMsg.url, "#173177", templateMsg.data);
-            sendtemplateMsg();
+            //sendtemplateMsg();
+            //let openidlist = ['opFC7v6PGMPcKy6w2iJkdykPEuWE', 'opFC7v4XMuF4S8P0U5i2n8NX3GCI', 'opFC7vxfNH3gtI1Z0x-FpyEyrLFI', 'opFC7vwWZos9RBB8ARfHjErjjRrI', 'opFC7v3H26aJ8AwOVF9IOwb_1Psk', 'opFC7v5Pl9lJeFws35DcKJpJw2ts', 'opFC7vzDCA_z8J19ZOSRhABi5PtA', 'opFC7v_UIvb5faVJX7eX42m_5JtM', 'opFC7vzgBbsDS4PL2KtBBOZtgWDo', 'opFC7v2kPaF_Dc2__6EiKGpGPYyg']
+            //sendMsg(openidlist, "收到该条消息说明您尚未按入学通知书上的要求添加“桂林市凤集小学2020级新生”QQ群，请收到该条消息后及时添加。QQ群号为：775286239 或者扫描入学通知上的二维码。")
             return ""
         } else {
             return "该公众号暂不支持在线消息回复功能。了解2020秋季招生信息请回复“招生”。"//，了解2020网上报名流程请回复“网上报名”"
@@ -109,10 +127,10 @@ router.post("/", wechat(config).middleware(async (message, ctx) => {
         } else if (message.Event === "TEMPLATESENDJOBFINISH") {
             if (message.Status === 'success') {
                 console.log("收到模板消息,消息ID：" + message.MsgID)
-                await nsn.updateone({msgid:message.MsgID},{$set:{"sendresult":'收到'}})
+                await nsn.updateone({ msgid: message.MsgID }, { $set: { "sendresult": '收到' } })
             } else {
                 console.log("拒收模板消息" + message.MsgID)
-                await nsn.updateone({msgid:message.MsgID},{$set:{"sendresult":'拒收'}})
+                await nsn.updateone({ msgid: message.MsgID }, { $set: { "sendresult": '拒收' } })
             }
         }
     } else {
@@ -146,7 +164,7 @@ var mymenu = {
             "type": "view",
             "url": 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + wechatconfig.wechatauth.appid + '&redirect_uri=' + encodeURIComponent("http://mxthink.cross.echosite.cn/wechat/binder/") + '&response_type=code&scope=snsapi_base&state=123#wechat_redirect'
         },
-        
+
         // {
         //     "name": "测试",
         //     "type": "view",
