@@ -75,7 +75,8 @@ linkDAO.myPaging=async function(keyword,pagesize,currentpage,sort){
     pagesize=pagesize||5;
     currentpage=currentpage||1;
     let start=(currentpage-1)*pagesize;
-    let list=await linkModel.find(query).skip(start).limit(pagesize).sort(sort).exec();
+    
+    let list=await linkModel.find(query).skip(parseInt(start)).limit(parseInt(pagesize)).sort(sort).exec();
     let countnum=await linkModel.countDocuments(query).exec();
     return {"recordset":list,"count":countnum}
 }
