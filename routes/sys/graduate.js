@@ -1,6 +1,6 @@
 const router = require('koa-router')()
 const mongoose = require('mongoose');
-const graduate=require('../../models/graduate/graduateinfo.js')
+const graduate=require('../../models/Graduate/graduateinfo.js')
 const base = require('../../models/Fjxx.js');
 const crypto = require('crypto')
 
