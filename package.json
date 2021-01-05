@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "carlo": "^0.9.46",
     "co-wechat": "^2.4.0",
     "co-wechat-api": "^3.9.1",
